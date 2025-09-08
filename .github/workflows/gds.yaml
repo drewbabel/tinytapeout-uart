@@ -17,7 +17,7 @@ jobs:
         uses: TinyTapeout/tt-gds-action@ttsky25a
         with:
           pdk: sky130
-          tools-ref: ttsky25a
+          tools-ref: main
 
   precheck:
     needs: gds
@@ -27,7 +27,7 @@ jobs:
         uses: TinyTapeout/tt-gds-action/precheck@ttsky25a
         with:
           pdk: sky130
-          tools-ref: ttsky25a
+          tools-ref: main
 
   gl_test:
     needs: gds
