@@ -14,20 +14,18 @@ jobs:
           submodules: recursive
 
       - name: Build GDS
-        uses: TinyTapeout/tt-gds-action@ttsky25a
+        uses: TinyTapeout/tt-gds-action@ttsky25b
         with:
           pdk: sky130
-          tools-ref: main
 
   precheck:
     needs: gds
     runs-on: ubuntu-24.04
     steps:
       - name: Run Tiny Tapeout Precheck
-        uses: TinyTapeout/tt-gds-action/precheck@ttsky25a
+        uses: TinyTapeout/tt-gds-action/precheck@ttsky25b
         with:
           pdk: sky130
-          tools-ref: main
 
   gl_test:
     needs: gds
@@ -39,7 +37,7 @@ jobs:
           submodules: recursive
 
       - name: GL test
-        uses: TinyTapeout/tt-gds-action/gl_test@ttsky25a
+        uses: TinyTapeout/tt-gds-action/gl_test@ttsky25b
         with:
           pdk: sky130
 
@@ -50,6 +48,6 @@ jobs:
       pages: write      # to deploy to Pages
       id-token: write   # to verify the deployment originates from an appropriate source
     steps:
-      - uses: TinyTapeout/tt-gds-action/viewer@ttsky25a
+      - uses: TinyTapeout/tt-gds-action/viewer@ttsky25b
         with:
           pdk: sky130

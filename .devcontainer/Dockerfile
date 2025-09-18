@@ -10,7 +10,7 @@ RUN apt install -y iverilog gtkwave python3 python3-pip python3-venv python3-tk 
 
 # Clone tt-support-tools
 RUN mkdir -p /ttsetup
-RUN git clone -b ttsky25a https://github.com/TinyTapeout/tt-support-tools /ttsetup/tt-support-tools
+RUN git clone https://github.com/TinyTapeout/tt-support-tools /ttsetup/tt-support-tools
 
 COPY test/requirements.txt /ttsetup/test_requirements.txt
 COPY .devcontainer/copy_tt_support_tools.sh /ttsetup
