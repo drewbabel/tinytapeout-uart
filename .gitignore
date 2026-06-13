@@ -11,3 +11,11 @@ test/sim_build
 test/__pycache__/
 test/results.xml
 test/gate_level_netlist.v
+
+# Local venv + sim artifacts + convenience Makefile
+/Makefile
+.venv/
+test/sim_build/
+test/results.xml
+test/*.fst
+/DREW_START_HERE.md
