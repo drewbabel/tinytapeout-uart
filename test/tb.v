@@ -27,8 +27,7 @@ module tb ();
   wire VGND = 1'b0;
 `endif
 
-  // Replace tt_um_drewbabel_example with your module name:
-  tt_um_drewbabel_example user_project (
+  tt_um_drewbabel_uart user_project (
 
       // Include power ports for the Gate Level test:
 `ifdef GL_TEST
