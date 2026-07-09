@@ -1,42 +1,57 @@
 ![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg) ![](../../workflows/fpga/badge.svg)
 
-# Tiny Tapeout Verilog Project Template
+# tinytapeout-uart
 
-- [Read the documentation for project](docs/info.md)
+A configurable UART with transmit and receive FIFOs, hardened for the Tiny Tapeout SKY130 (ttsky26c) shuttle.
 
-## What is Tiny Tapeout?
+The transmitter serializes a parallel byte behind start and stop bits (8N1); the receiver oversamples the incoming line at 16x, recovers each byte with mid-bit sampling, and flags framing errors. A `tick_gen` divides the 50 MHz system clock down to the baud rate and the receiver's oversample rate, and a two-flop `synchronizer` guards the asynchronous receive line against metastability, giving a clock-mismatch tolerance of about +/-4%.
 
-Tiny Tapeout is an educational project that aims to make it easier and cheaper than ever to get your digital and analog designs manufactured on a real chip.
+A 16-deep `sync_fifo` on each path decouples the host from the serial timing, so the host bursts bytes in through `tx_push` and drains them out through `rx_pop` without tracking the UART cycle by cycle. A small loader FSM hands buffered bytes from the TX FIFO to `uart_tx` whenever the transmitter is ready, and received bytes flow from `uart_rx` into the RX FIFO. The whole tile is pin-muxed onto the Tiny Tapeout `ui`/`uo`/`uio` bus.
 
-To learn more and get started, visit https://tinytapeout.com.
+The design is verified with a randomized self-checking cocotb testbench that loops 100 random bytes through the full TX-to-RX path and checks each against the reference stream, plus a framing-error case; the `uart_tx` and `uart_rx` cores each carry a SymbiYosys formal proof in the standalone [uart](https://github.com/drewbabel/uart) repo this design is built from.
 
-## Set up your Verilog project
+![Tile block diagram](docs/uart_tile_block.svg)
 
-1. Add your Verilog files to the `src` folder.
-2. Edit the [info.yaml](info.yaml) and update information about your project, paying special attention to the `source_files` and `top_module` properties. If you are upgrading an existing Tiny Tapeout project, check out our [online info.yaml migration tool](https://tinytapeout.github.io/tt-yaml-upgrade-tool/).
-3. Edit [docs/info.md](docs/info.md) and add a description of your project.
-4. Adapt the testbench to your design. See [test/README.md](test/README.md) for more information.
+## Pin map
 
-The GitHub action will automatically build the ASIC files using [LibreLane](https://www.zerotoasiccourse.com/terminology/librelane/).
+| Signal | Direction | Width | Description |
+|--------|-----------|-------|-------------|
+| `ui[7:0]` | in | 8 | `tx_data`, byte to enqueue for transmit |
+| `uio[1]` | in | 1 | `tx_push`, pulse to push `ui_in` into the TX FIFO |
+| `uio[2]` | in | 1 | `rx_pop`, pulse to pop a byte from the RX FIFO |
+| `uio[0]` | in | 1 | `rx_serial`, receive line (idle high) |
+| `uo[7:0]` | out | 8 | `rx_data`, RX FIFO read data |
+| `uio[3]` | out | 1 | `tx_serial`, transmit line (idle high) |
+| `uio[4]` | out | 1 | `tx_full`, TX FIFO full |
+| `uio[5]` | out | 1 | `rx_empty`, RX FIFO empty |
+| `uio[6]` | out | 1 | `rx_error`, framing error |
 
-## Enable GitHub actions to build the results page
+## Clock and area
 
-- [Enabling GitHub Pages](https://tinytapeout.com/faq/#my-github-action-is-failing-on-the-pages-part)
+Hardened at 50 MHz (`clock_hz: 50000000`, `CLOCK_PERIOD: 20`), giving `ClksPerBit = 434` at 115200 baud. Occupies a 1x2 tile: the pins fit a single tile, but the two 16-deep FIFOs push a 1x1 over utilization.
+
+## Verification
+
+| Test | Method |
+|------|--------|
+| `test.py` | cocotb FIFO loopback smoke test |
+| `test_hardened.py` | 100-byte randomized self-checking loopback + framing-error case |
+
+Run from `test/`:
+
+```
+make            # run the cocotb tests
+make GATES=yes  # gate-level simulation against the hardened netlist
+```
+
+## Results
+
+Internal loopback of `0x5A`: the byte is pushed into the TX FIFO, shifted out on `tx_serial` as an 8N1 frame, recovered by the receiver into the RX FIFO (`rx_empty` falls), and read back on `uo_out` when the host pulses `rx_pop`.
+
+![Loopback waveform](docs/uart_waveform.svg)
 
 ## Resources
 
+- [Tiny Tapeout](https://tinytapeout.com)
 - [FAQ](https://tinytapeout.com/faq/)
-- [Digital design lessons](https://tinytapeout.com/digital_design/)
-- [Learn how semiconductors work](https://tinytapeout.com/siliwiz/)
-- [Join the community](https://tinytapeout.com/discord)
-- [Build your design locally](https://www.tinytapeout.com/guides/local-hardening/)
-
-## What next?
-
-- [Submit your design to the next shuttle](https://app.tinytapeout.com/).
-- Edit [this README](README.md) and explain your design, how it works, and how to test it.
-- Share your project on your social network of choice:
-  - LinkedIn [#tinytapeout](https://www.linkedin.com/search/results/content/?keywords=%23tinytapeout) [@TinyTapeout](https://www.linkedin.com/company/100708654/)
-  - Mastodon [#tinytapeout](https://chaos.social/tags/tinytapeout) [@matthewvenn](https://chaos.social/@matthewvenn)
-  - X (formerly Twitter) [#tinytapeout](https://twitter.com/hashtag/tinytapeout) [@tinytapeout](https://twitter.com/tinytapeout)
-  - Bluesky [@tinytapeout.com](https://bsky.app/profile/tinytapeout.com)
+- [Submit your design to a shuttle](https://app.tinytapeout.com/)
