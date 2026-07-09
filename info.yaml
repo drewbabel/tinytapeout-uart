@@ -7,8 +7,9 @@ project:
   language:     "SystemVerilog"
   clock_hz:     50000000       # FINALIZE at submission to match the TT clock you request
 
-  # How many tiles your design occupies?
-  tiles: "1x1"
+  # How many tiles your design occupies? Two 16-deep FIFOs push 1x1 to 110% util;
+  # 1x2 lands ~55%. (Pins fit a single tile; FIFO storage area is what needs 1x2.)
+  tiles: "1x2"
 
   # Top module must start with "tt_um_".
   top_module:  "tt_um_drewbabel_uart"
