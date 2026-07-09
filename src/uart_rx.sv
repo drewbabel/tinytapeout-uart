@@ -31,10 +31,13 @@ module uart_rx #(
   logic [$clog2(OVERSAMPLE)-1:0] tick_cnt;
   logic [$clog2(DATA_BITS):0] data_cnt;
 
-  synchronizer sync_FF (
-      .clk(clk),
-      .d  (rx_serial),
-      .q  (in)
+  synchronizer #(
+      .WIDTH(1)
+  ) sync_FF (
+      .clk  (clk),
+      .rst_n(rst_n),
+      .d    (rx_serial),
+      .q    (in)
   );
 
   tick_gen #(

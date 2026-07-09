@@ -1,9 +1,9 @@
 # Tiny Tapeout project information
 project:
-  title:        "UART (8N1 TX/RX)"
+  title:        "UART with TX/RX FIFOs"
   author:       "Drew Babel"
   discord:      ""
-  description:  "8-bit UART transmitter and receiver, 8N1 framing, 16x oversampled RX"
+  description:  "8-bit UART (8N1, 16x oversampled RX) with 16-deep TX and RX sync FIFOs"
   language:     "SystemVerilog"
   clock_hz:     50000000       # FINALIZE at submission to match the TT clock you request
 
@@ -16,14 +16,15 @@ project:
   # Source files (in ./src). FIFO files under src/fifo/ are staged but NOT listed
   # here yet -- they are not compiled until the UART+FIFO integration is done.
   source_files:
-    - "project.v"
+    - "project.sv"
     - "uart.sv"
     - "uart_tx.sv"
     - "uart_rx.sv"
     - "tick_gen.sv"
     - "synchronizer.sv"
+    - "sync_fifo.sv"
 
-# Pinout - matches src/project.v
+# Pinout - matches src/project.sv
 pinout:
   # Inputs
   ui[0]: "tx_data[0]"
@@ -47,12 +48,12 @@ pinout:
 
   # Bidirectional pins
   uio[0]: "rx_serial (in)"
-  uio[1]: "tx_valid (in)"
-  uio[2]: "tx_serial (out)"
-  uio[3]: "tx_ready (out)"
-  uio[4]: "rx_valid (out)"
-  uio[5]: "rx_error (out)"
-  uio[6]: ""
+  uio[1]: "tx_push (in)"
+  uio[2]: "rx_pop (in)"
+  uio[3]: "tx_serial (out)"
+  uio[4]: "tx_full (out)"
+  uio[5]: "rx_empty (out)"
+  uio[6]: "rx_error (out)"
   uio[7]: ""
 
 # Do not change!
