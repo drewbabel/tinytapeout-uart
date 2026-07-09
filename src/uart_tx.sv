@@ -40,6 +40,7 @@ module uart_tx #(
       state <= IDLE;
       tx_serial <= 1'b1;
       data_cnt <= '0;
+      data <= '0;
     end else begin
       state <= next_state;
       if (tx_valid && tx_ready) data <= tx_data;

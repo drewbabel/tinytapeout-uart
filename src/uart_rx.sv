@@ -56,6 +56,8 @@ module uart_rx #(
       state <= IDLE;
       tick_cnt <= '0;
       data_cnt <= '0;
+      in_prev <= 1'b0;
+      rx_data <= '0;
     end else begin
       state   <= next_state;
       in_prev <= in;
