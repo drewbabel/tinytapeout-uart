@@ -31,22 +31,24 @@ async def test_fifo_loopback(dut):
 
     cocotb.start_soon(Clock(dut.clk, 20, unit="ns").start())  # 50 MHz
 
-    # Reset
+    IDLE = 1 << RX_SERIAL  # rx serial line idles HIGH; holding it low reads as a break
+
+    # Reset (rx line held idle-high the whole time)
     dut.ena.value = 1
     dut.ui_in.value = 0
-    dut.uio_in.value = 0
+    dut.uio_in.value = IDLE
     dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 10)
+    await ClockCycles(dut.clk, 20)
     dut.rst_n.value = 1
-    await ClockCycles(dut.clk, 5)
+    await ClockCycles(dut.clk, 10)
 
     test_byte = 0x5A
 
     # Push one byte into the TX FIFO (one-cycle pulse)
     dut.ui_in.value = test_byte
-    dut.uio_in.value = 1 << TX_PUSH
+    dut.uio_in.value = IDLE | (1 << TX_PUSH)
     await RisingEdge(dut.clk)
-    dut.uio_in.value = 0
+    dut.uio_in.value = IDLE
 
     # Run the serial loopback (TX line -> RX line) until the RX FIFO reports data
     got_data = False
@@ -61,9 +63,9 @@ async def test_fifo_loopback(dut):
     assert got_data, "RX FIFO never became non-empty (byte never made it through)"
 
     # Pop the byte; sync_fifo is registered-read, so data is valid the next cycle
-    dut.uio_in.value = 1 << RX_POP
+    dut.uio_in.value = IDLE | (1 << RX_POP)
     await RisingEdge(dut.clk)
-    dut.uio_in.value = 0
+    dut.uio_in.value = IDLE
     await RisingEdge(dut.clk)
 
     got = int(dut.uo_out.value)
