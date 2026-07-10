@@ -84,7 +84,7 @@ async def test_random_loopback(dut):
         assert bit(dut.uio_out, RX_ERROR, default=0) == 0, f"byte {i}: spurious rx_error"
 
 
-# Drive one frame onto rx_serial, LSB first, then return whether rx_error pulsed
+# Drive one frame, return whether rx_error pulsed
 async def drive_frame(dut, byte, good_stop=True):
     saw_error = [False]
 
@@ -116,7 +116,7 @@ BAUD_FAST = (RX_BIT_CLKS * 96) // 100   # TX 4% fast
 BAUD_SLOW = (RX_BIT_CLKS * 104) // 100  # TX 4% slow
 
 
-# Drive one 8N1 frame at an arbitrary bit period, watching rx_error
+# Drive one 8N1 frame at an arbitrary bit period
 async def drive_frame_cpb(dut, byte, cpb, good_stop=True):
     saw_error = [False]
 
@@ -135,7 +135,7 @@ async def drive_frame_cpb(dut, byte, cpb, good_stop=True):
     return saw_error[0]
 
 
-# Drive a clean frame, then check it landed intact in the RX FIFO
+# Drive a clean frame and check it landed
 async def expect_byte(dut, byte, cpb):
     err = await drive_frame_cpb(dut, byte, cpb)
     await ClockCycles(dut.clk, 5)
@@ -164,7 +164,7 @@ async def test_baud_tolerance(dut):
 
 @cocotb.test()
 async def test_start_glitch_reject(dut):
-    # A narrow low glitch must not launch a frame (line must hold low to mid-start)
+    # A narrow low glitch must not launch a frame
     await reset(dut)
     dut.uio_in.value = 0 << RX_SERIAL      # Narrow low glitch
     await ClockCycles(dut.clk, 3)
@@ -176,7 +176,7 @@ async def test_start_glitch_reject(dut):
 
 @cocotb.test()
 async def test_back_to_back(dut):
-    # Two frames minimally spaced: RX must re-arm in time for the next start edge
+    # Back-to-back frames, RX must re-arm in time
     await reset(dut)
     for data in (0x3C, 0xC3):
         await expect_byte(dut, data, RX_BIT_CLKS)

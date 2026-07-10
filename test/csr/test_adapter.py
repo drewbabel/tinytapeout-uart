@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Integration test: shift a serial frame in over the CSR pins and confirm it
-# reaches apb_csr through the adapter (write CTRL/SCRATCH, read SCRATCH back)
+# Shift serial frames over the CSR pins into apb_csr through the adapter
 
 import cocotb
 from cocotb.clock import Clock
@@ -10,7 +9,7 @@ REG_CTRL = 0
 REG_STATUS = 1
 REG_SCRATCH = 2
 
-# Hold each sclk phase this many clk cycles (>> 2-flop sync latency)
+# Clk cycles per sclk phase
 SCLK_HALF = 6
 
 
@@ -29,7 +28,7 @@ async def reset(dut):
     await ClockCycles(dut.clk, 2)
 
 
-# Shift a 12-bit frame {rw, addr[2:0], data[7:0]} MSB-first over csr_mosi/csr_sclk
+# Shift a 12-bit frame MSB-first
 async def shift_frame(dut, rw, addr, data):
     frame = ((rw & 1) << 11) | ((addr & 0x7) << 8) | (data & 0xFF)
     dut.csr_mode.value = 1
@@ -41,11 +40,11 @@ async def shift_frame(dut, rw, addr, data):
         await ClockCycles(dut.clk, SCLK_HALF)
         dut.csr_sclk.value = 0
         await ClockCycles(dut.clk, SCLK_HALF)
-    # Let frame_valid + the APB transaction complete
+    # Let the APB transaction land
     await ClockCycles(dut.clk, 8)
 
 
-# Background monitor: latch rdata_out whenever read_valid pulses
+# Latch rdata_out on read_valid
 async def _capture_reads(dut, box):
     while True:
         await RisingEdge(dut.clk)
@@ -53,7 +52,7 @@ async def _capture_reads(dut, box):
             box["val"] = int(dut.rdata_out.value)
 
 
-# Shift a read frame and catch one-cycle read_valid pulse
+# Shift a read frame and capture rdata
 async def read_frame(dut, addr):
     box = {"val": None}
     mon = cocotb.start_soon(_capture_reads(dut, box))

@@ -1,8 +1,7 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
-// Integration testbench: csr_pin_adapter (APB master) wired to apb_csr (slave)
-// Drives the serial CSR pins and checks the transaction reaches the register file
+// Integration testbench: csr_pin_adapter wired to apb_csr
 module tb_adapter ();
 
   initial begin

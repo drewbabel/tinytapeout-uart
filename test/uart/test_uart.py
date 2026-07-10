@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# uart feature coverage: parity (even/odd, good + error) and runtime baud,
-# exercised through a tx->rx loopback and direct frame injection.
+# Parity and runtime baud through loopback and direct frames
 
 import cocotb
 from cocotb.clock import Clock
@@ -34,7 +33,7 @@ async def _loopback(dut):
         dut.rx_serial.value = int(dut.tx_serial.value)
 
 
-# Push one byte through TX, loop it into RX, return (rx_data, rx_error)
+# Send one byte through the loopback
 async def send_recv(dut, byte, max_cycles=12000):
     while int(dut.tx_ready.value) != 1:
         await RisingEdge(dut.clk)
@@ -96,7 +95,7 @@ async def test_baud_runtime_loopback(dut):
     mon.kill()
 
 
-# Drive rx_serial directly at bit cadence, LSB-first, with a chosen parity bit
+# Drive one frame with a chosen parity bit
 async def drive_frame(dut, data, par_bit):
     async def bit(level):
         dut.rx_serial.value = level
@@ -125,7 +124,7 @@ async def test_parity_error_detected(dut):
                 saw_error[0] = True
 
     mon = cocotb.start_soon(watch())
-    # 0xA5 has even parity bit 0; drive the WRONG bit (1)
+    # Drive the wrong parity bit
     await drive_frame(dut, 0xA5, par_bit=1 - even_parity(0xA5))
     mon.kill()
     assert saw_error[0], "rx_error not raised on bad parity bit"

@@ -24,7 +24,6 @@ module tb ();
 
   tt_um_drewbabel_uart user_project (
 
-      // Include power ports for the Gate Level test:
 `ifdef GL_TEST
       .VPWR(VPWR),
       .VGND(VGND),

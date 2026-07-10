@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Isolation test for apb_csr: drive the APB slave directly and check the
-# register file (write/read SCRATCH, CTRL -> loopback_en, STATUS readback).
+# Drive the APB slave directly and check the register file
 
 import cocotb
 from cocotb.clock import Clock
@@ -32,7 +31,7 @@ async def reset(dut):
     await RisingEdge(dut.clk)
 
 
-# APB write: SETUP (penable=0) then ACCESS (penable=1), pready is always 1
+# APB write, SETUP then ACCESS
 async def apb_write(dut, addr, data):
     dut.psel.value = 1
     dut.penable.value = 0
@@ -47,7 +46,7 @@ async def apb_write(dut, addr, data):
     dut.pwrite.value = 0
 
 
-# APB read: prdata is combinational on paddr, sample in the ACCESS phase
+# APB read, sample prdata in the ACCESS phase
 async def apb_read(dut, addr):
     dut.psel.value = 1
     dut.penable.value = 0
@@ -63,7 +62,7 @@ async def apb_read(dut, addr):
     return val
 
 
-# small settle so prdata reflects the driven paddr before we sample
+# Let combinational prdata settle
 async def Timer_1(dut):
     from cocotb.triggers import Timer
     await Timer(1, unit="ns")
@@ -115,7 +114,6 @@ async def test_status_readback(dut):
 @cocotb.test()
 async def test_write_is_readonly_status(dut):
     await reset(dut)
-    # writing STATUS must not stick (no writable reg there)
     await apb_write(dut, REG_STATUS, 0xFF)
     dut.tx_full.value = 0
     dut.tx_empty.value = 0
