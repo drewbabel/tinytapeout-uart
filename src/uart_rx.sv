@@ -93,7 +93,6 @@ module uart_rx #(
       state   <= next_state;
       in_prev <= in;
 
-      // Latch config at the start edge
       if (state == IDLE && next_state == START) begin
         par_en_q  <= parity_en;
         par_odd_q <= parity_odd;

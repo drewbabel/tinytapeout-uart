@@ -12,7 +12,7 @@ module sync_fifo #(
     output logic empty
 );
 
-  localparam int AW = $clog2(DEPTH);  // address width: pointer = Aw+1 bits (extra wrap bit)
+  localparam int AW = $clog2(DEPTH);  // pointers carry an extra wrap bit
 
   logic [WIDTH-1:0] mem[DEPTH];
   logic [AW:0] wr_ptr;
