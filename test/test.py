@@ -6,7 +6,6 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles, RisingEdge
 
-# Design constants (match src/project.sv)
 CLK_PERIOD_NS = 20
 BAUD_RATE = 115_200
 CLK_FREQ_HZ = 50_000_000
@@ -85,7 +84,7 @@ async def test_random_loopback(dut):
         assert bit(dut.uio_out, RX_ERROR, default=0) == 0, f"byte {i}: spurious rx_error"
 
 
-# Drive one frame onto rx_serial, LSB first; return whether rx_error pulsed
+# Drive one frame onto rx_serial, LSB first, then return whether rx_error pulsed
 async def drive_frame(dut, byte, good_stop=True):
     saw_error = [False]
 
@@ -109,3 +108,75 @@ async def test_framing_error(dut):
     await reset(dut)
     assert await drive_frame(dut, 0xA5, good_stop=False), "rx_error not raised on bad stop bit"
     assert bit(dut.uio_out, RX_EMPTY, default=1) == 1, "malformed frame delivered a byte"
+
+
+# RX bit period at reset default (16 oversamples * 27 clk)
+RX_BIT_CLKS = 432
+BAUD_FAST = (RX_BIT_CLKS * 96) // 100   # TX 4% fast
+BAUD_SLOW = (RX_BIT_CLKS * 104) // 100  # TX 4% slow
+
+
+# Drive one 8N1 frame at an arbitrary bit period, watching rx_error
+async def drive_frame_cpb(dut, byte, cpb, good_stop=True):
+    saw_error = [False]
+
+    async def drive_bit(level):
+        dut.uio_in.value = level << RX_SERIAL
+        for _ in range(cpb):
+            await RisingEdge(dut.clk)
+            if bit(dut.uio_out, RX_ERROR, default=0) == 1:
+                saw_error[0] = True
+
+    await drive_bit(0)                       # Start bit
+    for i in range(8):
+        await drive_bit((byte >> i) & 1)     # Data bits, LSB first
+    await drive_bit(1 if good_stop else 0)   # Stop bit
+    dut.uio_in.value = IDLE
+    return saw_error[0]
+
+
+# Drive a clean frame, then check it landed intact in the RX FIFO
+async def expect_byte(dut, byte, cpb):
+    err = await drive_frame_cpb(dut, byte, cpb)
+    await ClockCycles(dut.clk, 5)
+    assert bit(dut.uio_out, RX_EMPTY, default=1) == 0, \
+        f"byte {byte:#04x} @{cpb} clk/bit never landed"
+    got = await pop_rx(dut)
+    assert got == byte, f"@{cpb} clk/bit: sent {byte:#04x}, got {got:#04x}"
+    assert not err, f"byte {byte:#04x} @{cpb} clk/bit: spurious rx_error"
+
+
+@cocotb.test()
+async def test_all_values_nominal(dut):
+    await reset(dut)
+    for data in (0x00, 0xFF, 0xA5, 0x5A, 0x0F, 0xF0, 0x81, 0x7E):
+        await expect_byte(dut, data, RX_BIT_CLKS)
+
+
+@cocotb.test()
+async def test_baud_tolerance(dut):
+    # +/-4% baud mismatch must still decode
+    await reset(dut)
+    for cpb in (BAUD_FAST, BAUD_SLOW):
+        for data in (0x00, 0xFF, 0xA5, 0x5A):
+            await expect_byte(dut, data, cpb)
+
+
+@cocotb.test()
+async def test_start_glitch_reject(dut):
+    # A narrow low glitch must not launch a frame (line must hold low to mid-start)
+    await reset(dut)
+    dut.uio_in.value = 0 << RX_SERIAL      # Narrow low glitch
+    await ClockCycles(dut.clk, 3)
+    dut.uio_in.value = IDLE
+    await ClockCycles(dut.clk, RX_BIT_CLKS * 2)
+    assert bit(dut.uio_out, RX_EMPTY, default=1) == 1, "glitch spawned a phantom byte"
+    assert bit(dut.uio_out, RX_ERROR, default=0) == 0, "glitch raised rx_error"
+
+
+@cocotb.test()
+async def test_back_to_back(dut):
+    # Two frames minimally spaced: RX must re-arm in time for the next start edge
+    await reset(dut)
+    for data in (0x3C, 0xC3):
+        await expect_byte(dut, data, RX_BIT_CLKS)
