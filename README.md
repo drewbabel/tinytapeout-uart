@@ -39,15 +39,11 @@ The register block is an AMBA-APB slave. A full parallel bus will not fit the on
 | 3 | `BAUD_LO` | R/W | baud divisor `[7:0]` |
 | 4 | `BAUD_HI` | R/W | baud divisor `[15:8]` |
 
-## Clock and area
-
-Hardened at 50 MHz (`clock_hz: 50000000`, `CLOCK_PERIOD: 20`), giving `ClksPerBit = 434` at 115200 baud. The design occupies a 1x2 tile. The pins fit a single tile, but the two 16-deep FIFOs push a 1x1 over utilization.
-
 ## Verification
 
 | Test | Method |
 |------|--------|
-| `test/test.py` | 100-byte randomized self-checking loopback plus a framing-error case (top level) |
+| `test/test.py` | 100-byte randomized loopback, framing error, a data-value sweep, +/-4% baud tolerance, start-glitch rejection, and back-to-back frames (top level) |
 | `test/csr` | APB register block driven directly, plus a serial-frame to APB round-trip through the adapter |
 | `test/uart` | parity (even and odd, good and error) and a runtime baud divisor through loopback |
 
