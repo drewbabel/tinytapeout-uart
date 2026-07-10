@@ -74,7 +74,8 @@ module tb_adapter ();
       .tx_full    (tx_full),
       .tx_empty   (tx_empty),
       .rx_empty   (rx_empty),
-      .rx_error   (rx_error)
+      .rx_error   (rx_error),
+      .rx_overflow(1'b0)
   );
 
 endmodule

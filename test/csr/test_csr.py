@@ -24,6 +24,7 @@ async def reset(dut):
     dut.tx_empty.value = 0
     dut.rx_empty.value = 0
     dut.rx_error.value = 0
+    dut.rx_overflow.value = 0
     dut.rst_n.value = 0
     await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
@@ -101,7 +102,7 @@ async def test_ctrl_loopback(dut):
 @cocotb.test()
 async def test_status_readback(dut):
     await reset(dut)
-    # STATUS = {rx_error, rx_empty, tx_empty, tx_full} in bits [3:0]
+    # STATUS = {ovf_sticky, err_sticky, rx_empty, tx_empty, tx_full}
     dut.tx_full.value = 1
     dut.tx_empty.value = 0
     dut.rx_empty.value = 1

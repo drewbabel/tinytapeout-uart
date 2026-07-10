@@ -33,6 +33,7 @@ module tb_csr ();
   logic tx_empty;
   logic rx_empty;
   logic rx_error;
+  logic rx_overflow;
 
   apb_csr #(
       .ADDR_W(AddrW),
@@ -54,7 +55,8 @@ module tb_csr ();
       .tx_full    (tx_full),
       .tx_empty   (tx_empty),
       .rx_empty   (rx_empty),
-      .rx_error   (rx_error)
+      .rx_error   (rx_error),
+      .rx_overflow(rx_overflow)
   );
 
 endmodule
