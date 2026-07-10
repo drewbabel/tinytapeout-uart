@@ -8,7 +8,7 @@ The transmitter serializes a parallel byte behind start and stop bits (8N1, with
 
 A 16-deep `sync_fifo` on each path decouples the host from the serial timing, so the host bursts bytes in through `tx_push` and drains them out through `rx_pop` without tracking the UART cycle by cycle. A small loader FSM hands buffered bytes from the TX FIFO to `uart_tx` whenever the transmitter is ready, and received bytes flow from `uart_rx` into the RX FIFO. The whole tile is pin-muxed onto the Tiny Tapeout `ui`/`uo`/`uio` bus.
 
-A memory-mapped register block makes the tile programmable at runtime over the pins it already has. A `csr_pin_adapter` shifts a 12-bit frame of a read/write bit, an address, and a data byte in over three reused pins, then drives it as one AMBA-APB transaction into `apb_csr`, a small APB-slave register file. The registers turn on an internal loopback so the tile can exercise itself with no host, select even or odd parity, set a runtime baud divisor, and expose the FIFO status flags for readback. Every register resets to zero, so the tile powers up as a plain 8N1 UART at 115200 baud.
+A memory-mapped register block makes the tile programmable at runtime over the pins it already has. A `csr_pin_adapter` shifts a 12-bit frame of a read/write bit, an address, and a data byte in over three reused pins, then drives it as one AMBA-APB transaction into `apb_csr`, a small APB-slave register file. The registers turn on an internal loopback so the tile can exercise itself with no host, select even or odd parity, set a runtime baud divisor, and expose the FIFO status flags for readback.
 
 ![Tile block diagram](docs/uart_tile_block.svg)
 
@@ -35,7 +35,7 @@ The register block is an AMBA-APB slave. A full parallel bus will not fit the on
 |------|------|--------|----------|
 | 0 | `CTRL` | R/W | bit0 `loopback_en`, bit1 `parity_en`, bit2 `parity_odd` |
 | 1 | `STATUS` | R | `rx_error`, `rx_empty`, `tx_empty`, `tx_full` in bits `[3:0]` |
-| 2 | `SCRATCH` | R/W | 8-bit scratch register, write then read back to prove the path |
+| 2 | `SCRATCH` | R/W | 8-bit scratch register |
 | 3 | `BAUD_LO` | R/W | baud divisor `[7:0]` |
 | 4 | `BAUD_HI` | R/W | baud divisor `[15:8]` |
 
@@ -63,9 +63,13 @@ make -C uart                     # parity and runtime baud
 
 ## Results
 
-The loopback waveform below shows an internal loopback of `0x5A`. The byte is pushed into the TX FIFO, shifted out on `tx_serial` as an 8N1 frame, recovered by the receiver into the RX FIFO (`rx_empty` falls), and read back on `uo_out` when the host pulses `rx_pop`.
+A byte pushed into the TX FIFO is shifted out on `tx_serial` as an 8N1 frame, recovered by the receiver into the RX FIFO, and read back on `uo_out`.
 
 ![Loopback waveform](docs/uart_waveform.svg)
+
+A serial CSR write shifts a 12-bit frame in on `csr_sclk` and `csr_mosi`, and the adapter drives one APB write into the register block.
+
+![CSR write waveform](docs/uart_csr_waveform.svg)
 
 ## Resources
 
