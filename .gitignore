@@ -12,8 +12,9 @@ test/__pycache__/
 test/results.xml
 test/gate_level_netlist.v
 
-# Local venv + sim artifacts + convenience Makefile
+# Local venv + sim artifacts + convenience Makefile + tt support tools
 /Makefile
+/tt/
 .venv/
 test/sim_build/
 test/results.xml

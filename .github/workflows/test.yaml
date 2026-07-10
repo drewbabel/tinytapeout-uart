@@ -31,6 +31,20 @@ jobs:
           # make will return success even if the test fails, so check for failure in the results.xml
           ! grep failure results.xml
 
+      - name: Run CSR block tests
+        run: |
+          cd test/csr
+          make
+          ! grep failure results.xml
+          make -f Makefile.adapter
+          ! grep failure results.xml
+
+      - name: Run UART feature tests
+        run: |
+          cd test/uart
+          make
+          ! grep failure results.xml
+
       - name: Test Summary
         uses: test-summary/action@v2.4
         with:
