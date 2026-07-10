@@ -1,19 +1,12 @@
-# Tiny Tapeout project information
 project:
-  title:        "Configurable UART with FIFOs and CSR"
+  title:        "Configurable FIFO-buffered UART with APB CSR"
   author:       "Drew Babel"
   discord:      ""
-  description:  "8-bit UART (8N1 or parity, 16x oversampled RX) with 16-deep TX and RX sync FIFOs and a serial-programmed CSR for loopback, parity, and runtime baud"
+  description:  "A configurable, FIFO-buffered UART with an AMBA-APB register block, hardened to silicon on SkyWater SKY130 for the Tiny Tapeout shuttle."
   language:     "SystemVerilog"
   clock_hz:     50000000
-
-  # 1x1 overflows on the FIFOs plus CSR, 1x2 lands ~80% utilized
   tiles: "1x2"
-
-  # Top module must start with "tt_um_".
   top_module:  "tt_um_drewbabel_uart"
-
-  # Source files (in ./src).
   source_files:
     - "project.sv"
     - "uart.sv"
@@ -26,9 +19,7 @@ project:
     - "apb_csr.sv"
     - "csr_pin_adapter.sv"
 
-# Pinout matches src/project.sv
 pinout:
-  # Inputs
   ui[0]: "tx_data[0] / csr_mosi (in)"
   ui[1]: "tx_data[1]"
   ui[2]: "tx_data[2]"
@@ -38,7 +29,6 @@ pinout:
   ui[6]: "tx_data[6]"
   ui[7]: "tx_data[7]"
 
-  # Outputs
   uo[0]: "rx_data[0]"
   uo[1]: "rx_data[1]"
   uo[2]: "rx_data[2]"
@@ -48,7 +38,6 @@ pinout:
   uo[6]: "rx_data[6]"
   uo[7]: "rx_data[7]"
 
-  # Bidirectional pins
   uio[0]: "rx_serial (in)"
   uio[1]: "tx_push / csr_sclk (in)"
   uio[2]: "rx_pop (in)"
@@ -58,5 +47,4 @@ pinout:
   uio[6]: "rx_error (out)"
   uio[7]: "csr_mode (in)"
 
-# Do not change!
 yaml_version: 6
