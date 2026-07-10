@@ -38,7 +38,7 @@ module uart_csr_wave_tb;
       .clk(clk), .rst_n(rst_n), .psel(psel), .penable(penable), .pwrite(pwrite),
       .paddr(paddr), .pwdata(pwdata), .prdata(prdata), .pready(pready),
       .loopback_en(loopback_en), .parity_en(), .parity_odd(), .baud_div(),
-      .tx_full(tx_full), .tx_empty(tx_empty), .rx_empty(rx_empty), .rx_error(rx_error)
+      .tx_full(tx_full), .tx_empty(tx_empty), .rx_empty(rx_empty), .rx_error(rx_error), .rx_overflow(1'b0)
   );
 
   integer f, i;
