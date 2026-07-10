@@ -2,9 +2,9 @@
 
 # tinytapeout-uart
 
-A configurable UART with transmit and receive FIFOs and a memory-mapped register block, hardened for the Tiny Tapeout SKY130 (ttsky26c) shuttle.
+A configurable UART with transmit and receive FIFOs and a memory-mapped AMBA-APB register block, hardened for the Tiny Tapeout SKY130 (ttsky26c) shuttle.
 
-The transmitter serializes a parallel byte behind start and stop bits (8N1, with optional parity). The receiver oversamples the incoming line at 16x, recovers each byte with mid-bit sampling, and flags framing and parity errors. A `tick_gen` divides the 50 MHz system clock down to the baud rate and the receiver's oversample rate. A two-flop `synchronizer` guards the asynchronous receive line against metastability, giving a clock-mismatch tolerance of about +/-4%.
+The transmitter serializes a parallel byte behind start and stop bits (8N1, with optional parity). The receiver oversamples the incoming line at 16x, recovers each byte with mid-bit sampling, and flags framing and parity errors. A `tick_gen` divides the 50 MHz system clock down to the baud rate and the receiver's oversample rate. A two-flop `synchronizer` guards the asynchronous receive line against metastability across the clock-domain crossing, giving a clock-mismatch tolerance of about +/-4%.
 
 A 16-deep `sync_fifo` on each path decouples the host from the serial timing, so the host bursts bytes in through `tx_push` and drains them out through `rx_pop` without tracking the UART cycle by cycle. A small loader FSM hands buffered bytes from the TX FIFO to `uart_tx` whenever the transmitter is ready, and received bytes flow from `uart_rx` into the RX FIFO. The whole tile is pin-muxed onto the Tiny Tapeout `ui`/`uo`/`uio` bus.
 

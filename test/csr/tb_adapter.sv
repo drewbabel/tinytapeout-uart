@@ -11,8 +11,8 @@ module tb_adapter ();
     #1;
   end
 
-  localparam ADDR_W = 3;
-  localparam DATA_W = 8;
+  localparam int AddrW = 3;
+  localparam int DataW = 8;
 
   logic clk;
   logic rst_n;
@@ -27,16 +27,16 @@ module tb_adapter ();
   logic rx_error;
 
   logic loopback_en;
-  logic [DATA_W-1:0] rdata_out;
+  logic [DataW-1:0] rdata_out;
   logic read_valid;
 
   logic psel, penable, pwrite, pready;
-  logic [ADDR_W-1:0] paddr;
-  logic [DATA_W-1:0] pwdata, prdata;
+  logic [AddrW-1:0] paddr;
+  logic [DataW-1:0] pwdata, prdata;
 
   csr_pin_adapter #(
-      .ADDR_W(ADDR_W),
-      .DATA_W(DATA_W)
+      .ADDR_W(AddrW),
+      .DATA_W(DataW)
   ) u_adapter (
       .clk       (clk),
       .rst_n     (rst_n),
@@ -55,8 +55,8 @@ module tb_adapter ();
   );
 
   apb_csr #(
-      .ADDR_W(ADDR_W),
-      .DATA_W(DATA_W)
+      .ADDR_W(AddrW),
+      .DATA_W(DataW)
   ) u_csr (
       .clk        (clk),
       .rst_n      (rst_n),
@@ -68,6 +68,9 @@ module tb_adapter ();
       .prdata     (prdata),
       .pready     (pready),
       .loopback_en(loopback_en),
+      .parity_en  (),
+      .parity_odd (),
+      .baud_div   (),
       .tx_full    (tx_full),
       .tx_empty   (tx_empty),
       .rx_empty   (rx_empty),

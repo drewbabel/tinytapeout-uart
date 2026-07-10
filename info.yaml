@@ -1,13 +1,13 @@
 # Tiny Tapeout project information
 project:
-  title:        "UART with TX/RX FIFOs"
+  title:        "Configurable UART with FIFOs and CSR"
   author:       "Drew Babel"
   discord:      ""
-  description:  "8-bit UART (8N1, 16x oversampled RX) with 16-deep TX and RX sync FIFOs"
+  description:  "8-bit UART (8N1 or parity, 16x oversampled RX) with 16-deep TX and RX sync FIFOs and a serial-programmed CSR for loopback, parity, and runtime baud"
   language:     "SystemVerilog"
-  clock_hz:     50000000       # 50 MHz; ClksPerBit = 434 for 115200 baud
+  clock_hz:     50000000
 
-  # 1x1 overflows to ~110% util from the two 16-deep FIFOs; 1x2 lands ~55%.
+  # 1x1 overflows on the FIFOs plus CSR, 1x2 lands ~80% utilized
   tiles: "1x2"
 
   # Top module must start with "tt_um_".
@@ -26,7 +26,7 @@ project:
     - "apb_csr.sv"
     - "csr_pin_adapter.sv"
 
-# Pinout - matches src/project.sv
+# Pinout matches src/project.sv
 pinout:
   # Inputs
   ui[0]: "tx_data[0] / csr_mosi (in)"

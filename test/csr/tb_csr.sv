@@ -10,8 +10,8 @@ module tb_csr ();
     #1;
   end
 
-  localparam int ADDR_W = 3;
-  localparam int DATA_W = 8;
+  localparam int AddrW = 3;
+  localparam int DataW = 8;
 
   logic clk;
   logic rst_n;
@@ -19,15 +19,15 @@ module tb_csr ();
   logic psel;
   logic penable;
   logic pwrite;
-  logic [ADDR_W-1:0] paddr;
-  logic [DATA_W-1:0] pwdata;
-  logic [DATA_W-1:0] prdata;
+  logic [AddrW-1:0] paddr;
+  logic [DataW-1:0] pwdata;
+  logic [DataW-1:0] prdata;
   logic pready;
 
   logic loopback_en;
   logic parity_en;
   logic parity_odd;
-  logic [2*DATA_W-1:0] baud_div;
+  logic [2*DataW-1:0] baud_div;
 
   logic tx_full;
   logic tx_empty;
@@ -35,8 +35,8 @@ module tb_csr ();
   logic rx_error;
 
   apb_csr #(
-      .ADDR_W(ADDR_W),
-      .DATA_W(DATA_W)
+      .ADDR_W(AddrW),
+      .DATA_W(DataW)
   ) dut (
       .clk        (clk),
       .rst_n      (rst_n),
