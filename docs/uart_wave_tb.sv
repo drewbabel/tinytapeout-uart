@@ -39,14 +39,16 @@ module uart_wave_tb;
     rst_n = 1;
     @(posedge clk);
 
-    // push 0x5A into the TX FIFO
+    // Push 0x5A, ui_in held past release
+    @(negedge clk);
     ui_in = 8'h5A;
     uio_in[1] = 1;
-    @(posedge clk);
+    repeat (2) @(negedge clk);
     uio_in[1] = 0;
+    repeat (6) @(negedge clk);
     ui_in = 0;
 
-    // loop tx_serial -> rx_serial, dump each clock until a byte lands
+    // Loop tx_serial into rx_serial until a byte lands
     for (i = 0; i < 6000; i = i + 1) begin
       uio_in[0] = uio_out[3];
       dump;
@@ -54,7 +56,7 @@ module uart_wave_tb;
       if (uio_out[5] == 0) i = 6000;
     end
 
-    // tail: hold the received state, pop mid-window so uo_out shows the byte
+    // Hold the tail, pop mid-window
     for (i = 0; i < 500; i = i + 1) begin
       uio_in[0] = uio_out[3];
       uio_in[2] = (i == 150);  // one-cycle rx_pop pulse

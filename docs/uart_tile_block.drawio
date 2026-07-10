@@ -98,9 +98,9 @@
         <mxCell id="lbl_apb" value="APB" vertex="1" parent="1" style="text;html=1;align=center;fontStyle=2;fontSize=13;labelBackgroundColor=#ffffff;fillColor=none;strokeColor=none;">
           <mxGeometry x="512" y="621" width="56" height="16" as="geometry"/></mxCell>
         <mxCell id="lbl_config" value="config" vertex="1" parent="1" style="text;html=1;align=left;fontStyle=2;fontSize=13;labelBackgroundColor=#ffffff;fillColor=none;strokeColor=none;">
-          <mxGeometry x="792" y="547" width="60" height="16" as="geometry"/></mxCell>
+          <mxGeometry x="792" y="536" width="60" height="16" as="geometry"/></mxCell>
         <mxCell id="lbl_status" value="status" vertex="1" parent="1" style="text;html=1;align=right;fontStyle=2;fontSize=13;labelBackgroundColor=#ffffff;fillColor=none;strokeColor=none;">
-          <mxGeometry x="628" y="547" width="60" height="16" as="geometry"/></mxCell>
+          <mxGeometry x="628" y="536" width="60" height="16" as="geometry"/></mxCell>
 
         <!-- INTERNAL on-wire signal names (lifted, white bg) -->
         <mxCell id="nm_dout" value="tx_fifo_dout" vertex="1" parent="1" style="text;html=1;align=center;fontStyle=2;fontSize=13;labelBackgroundColor=#ffffff;fillColor=none;strokeColor=none;">
@@ -109,6 +109,18 @@
           <mxGeometry x="520" y="439" width="120" height="18" as="geometry"/></mxCell>
 
         <!-- BUS WIDTH TICKS (slash on wire + "8" directly above) -->
+        <!-- config tap: T off the config trunk, around uart_rx, into uart_tx (TX latches parity/baud too) -->
+        <mxCell id="e_cfg_tx" edge="1" parent="1" target="utx" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#000000;strokeWidth=1.5;endArrow=block;endFill=1;entryX=0.9;entryY=1;jumpStyle=arc;jumpSize=8;">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="780" y="560" as="sourcePoint"/>
+            <Array as="points"><mxPoint x="884" y="560"/><mxPoint x="884" y="265"/><mxPoint x="822" y="265"/></Array></mxGeometry></mxCell>
+
+        <!-- csr_rdata: adapter read data joins the uo_out net (read mux) -->
+        <mxCell id="e_rdata" edge="1" parent="1" source="csradapter" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#000000;strokeWidth=1.5;endArrow=block;endFill=1;exitX=0;exitY=0.35;jumpStyle=arc;jumpSize=8;">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="210" y="442" as="targetPoint"/>
+            <Array as="points"><mxPoint x="210" y="632"/></Array></mxGeometry></mxCell>
+        <mxCell id="nm_rdata" value="csr_rdata" vertex="1" parent="1" style="text;html=1;align=left;fontStyle=2;fontSize=13;labelBackgroundColor=#ffffff;fillColor=none;strokeColor=none;">
+          <mxGeometry x="218" y="539" width="84" height="18" as="geometry"/></mxCell>
+
         <mxCell id="tick_uiin" edge="1" parent="1" style="endArrow=none;startArrow=none;html=1;strokeColor=#000000;strokeWidth=1.5;">
           <mxGeometry relative="1" as="geometry"><mxPoint x="150" y="181" as="sourcePoint"/><mxPoint x="164" y="163" as="targetPoint"/></mxGeometry></mxCell>
         <mxCell id="w_uiin" value="8" vertex="1" parent="1" style="text;html=1;align=center;fontStyle=2;fontSize=13;fillColor=none;strokeColor=none;">

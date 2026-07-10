@@ -44,13 +44,14 @@ module uart_csr_wave_tb;
   integer f, i;
   logic [11:0] frame = 12'b1_000_0000_0001;  // rw=1, addr=CTRL(0), data=0x01
 
+  // Negedge stimulus, no posedge race
   task shift_bit(input logic b);
     begin
+      @(negedge clk);
       csr_mosi = b;
-      csr_sclk = 0;
-      repeat (HALF) @(posedge clk);
+      repeat (HALF) @(negedge clk);
       csr_sclk = 1;
-      repeat (HALF) @(posedge clk);
+      repeat (HALF) @(negedge clk);
       csr_sclk = 0;
     end
   endtask
