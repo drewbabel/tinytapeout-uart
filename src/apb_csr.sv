@@ -21,7 +21,8 @@ module apb_csr #(
     input logic tx_full,
     input logic tx_empty,
     input logic rx_empty,
-    input logic rx_error
+    input logic rx_error,
+    input logic rx_overflow
 );
 
   localparam logic [ADDR_W-1:0] RegCtrl = 3'd0;
@@ -36,6 +37,10 @@ module apb_csr #(
   logic [DATA_W-1:0] baud_hi_reg;
   logic apb_access;
 
+  // Sticky until a CTRL write clears them
+  logic err_sticky;
+  logic ovf_sticky;
+
   assign apb_access = (psel && penable);
   assign pready = 1'b1;
   assign loopback_en = ctrl_reg[0];
@@ -49,21 +54,31 @@ module apb_csr #(
       scratch_reg <= '0;
       baud_lo_reg <= '0;
       baud_hi_reg <= '0;
-    end else if (apb_access && pwrite) begin
-      case (paddr)
-        RegCtrl:    ctrl_reg <= pwdata;
-        RegScratch: scratch_reg <= pwdata;
-        RegBaudLo:  baud_lo_reg <= pwdata;
-        RegBaudHi:  baud_hi_reg <= pwdata;
-        default:    ;
-      endcase
+      err_sticky <= 1'b0;
+      ovf_sticky <= 1'b0;
+    end else begin
+      if (rx_error) err_sticky <= 1'b1;
+      if (rx_overflow) ovf_sticky <= 1'b1;
+      if (apb_access && pwrite) begin
+        case (paddr)
+          RegCtrl: begin
+            ctrl_reg   <= pwdata;
+            err_sticky <= 1'b0;
+            ovf_sticky <= 1'b0;
+          end
+          RegScratch: scratch_reg <= pwdata;
+          RegBaudLo:  baud_lo_reg <= pwdata;
+          RegBaudHi:  baud_hi_reg <= pwdata;
+          default:    ;
+        endcase
+      end
     end
   end
 
   always_comb begin
     case (paddr)
       RegCtrl:    prdata = ctrl_reg;
-      RegStatus:  prdata = {4'b0, rx_error, rx_empty, tx_empty, tx_full};
+      RegStatus:  prdata = {3'b0, ovf_sticky, err_sticky, rx_empty, tx_empty, tx_full};
       RegScratch: prdata = scratch_reg;
       RegBaudLo:  prdata = baud_lo_reg;
       RegBaudHi:  prdata = baud_hi_reg;

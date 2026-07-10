@@ -39,8 +39,14 @@ module uart_rx #(
   logic par_bad;
   logic [BaudW-1:0] rx_os_div;
 
-  assign rx_os_div = baud_div >> $clog2(OVERSAMPLE);
-  assign par_bad   = parity_en && (par_rx != exp_par);
+  // Config latched per frame
+  logic par_en_q;
+  logic par_odd_q;
+  logic [BaudW-1:0] os_div_q;
+
+  // Round to nearest, wide add so a max divisor cannot wrap
+  assign rx_os_div = BaudW'(({1'b0, baud_div} + (BaudW + 1)'(OVERSAMPLE / 2)) >> $clog2(OVERSAMPLE));
+  assign par_bad   = par_en_q && (par_rx != exp_par);
 
   synchronizer #(
       .WIDTH(1)
@@ -58,7 +64,7 @@ module uart_rx #(
       .clk    (clk),
       .rst_n  (rst_n),
       .clr    (tick_clr),
-      .divisor(rx_os_div),
+      .divisor(os_div_q),
       .tick   (tick)
   );
 
@@ -66,7 +72,7 @@ module uart_rx #(
       .DATA_BITS(DATA_BITS)
   ) u_par (
       .data(rx_data),
-      .odd (parity_odd),
+      .odd (par_odd_q),
       .p   (exp_par)
   );
 
@@ -80,9 +86,19 @@ module uart_rx #(
       in_prev <= 1'b0;
       rx_data <= '0;
       par_rx <= 1'b0;
+      par_en_q <= 1'b0;
+      par_odd_q <= 1'b0;
+      os_div_q <= '0;
     end else begin
       state   <= next_state;
       in_prev <= in;
+
+      // Latch config at the start edge
+      if (state == IDLE && next_state == START) begin
+        par_en_q  <= parity_en;
+        par_odd_q <= parity_odd;
+        os_div_q  <= rx_os_div;
+      end
 
       // Result Pulse
       if (state == RESULT && next_state == IDLE) begin
@@ -136,17 +152,18 @@ module uart_rx #(
       end
 
       DATA: begin
-        if (!parity_en && data_cnt == $bits(data_cnt)'(DATA_BITS)) begin
+        if (!par_en_q && data_cnt == $bits(data_cnt)'(DATA_BITS)) begin
           next_state = RESULT;
           tick_clr   = 1'b1;
-        end else if (parity_en && data_cnt == $bits(data_cnt)'(DATA_BITS + 1)) begin
+        end else if (par_en_q && data_cnt == $bits(data_cnt)'(DATA_BITS + 1)) begin
           next_state = RESULT;
           tick_clr   = 1'b1;
         end
       end
 
       RESULT: begin
-        if (tick_cnt == $bits(tick_cnt)'(OVERSAMPLE - 1)) begin
+        // Full 16-tick wait samples the stop bit mid-bit
+        if (tick && tick_cnt == $bits(tick_cnt)'(OVERSAMPLE - 1)) begin
           next_state = IDLE;
         end
       end

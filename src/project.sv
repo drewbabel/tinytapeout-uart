@@ -11,18 +11,39 @@ module tt_um_drewbabel_uart (
     input  wire       rst_n
 );
 
-  logic csr_mode;
-  logic csr_sclk;
-  logic csr_mosi;
-  assign csr_mode = uio_in[7];
-  assign csr_sclk = uio_in[1];
-  assign csr_mosi = ui_in[0];
+  // One shared 2FF sync so the strobe gating and CSR adapter never disagree
+  logic [3:0] hs_sync;
+  synchronizer #(
+      .WIDTH(4)
+  ) u_hs_sync (
+      .clk  (clk),
+      .rst_n(rst_n),
+      .d    ({uio_in[7], uio_in[1], uio_in[2], ui_in[0]}),
+      .q    (hs_sync)
+  );
 
-  // Host strobes, gated off in CSR mode
+  logic mode_s;
+  logic push_s;
+  logic pop_s;
+  logic mosi_s;
+  assign {mode_s, push_s, pop_s, mosi_s} = hs_sync;
+
+  logic push_s_d;
+  logic pop_s_d;
+  always_ff @(posedge clk) begin
+    if (!rst_n) begin
+      push_s_d <= 1'b0;
+      pop_s_d  <= 1'b0;
+    end else begin
+      push_s_d <= push_s;
+      pop_s_d  <= pop_s;
+    end
+  end
+
   logic rx_pop;
   logic tx_push;
-  assign tx_push = uio_in[1] & ~csr_mode;
-  assign rx_pop  = uio_in[2] & ~csr_mode;
+  assign tx_push = push_s & ~push_s_d & ~mode_s;
+  assign rx_pop  = pop_s & ~pop_s_d & ~mode_s;
 
   logic [7:0] tx_fifo_dout;
   logic       tx_full;
@@ -59,7 +80,7 @@ module tt_um_drewbabel_uart (
   logic [15:0] baud_div;
 
   uart #(
-      .CLK_FREQ_HZ(50_000_000),  // FINALIZE at submission: match the TT clock you request
+      .CLK_FREQ_HZ(50_000_000),  // = info.yaml clock_hz
       .BAUD_RATE  (115_200),
       .OVERSAMPLE (16),
       .DATA_BITS  (8),
@@ -102,7 +123,8 @@ module tt_um_drewbabel_uart (
 
   logic [7:0] rx_fifo_dout;
   logic       rx_empty;
-  logic       rx_full_unused;
+  logic       rx_full;
+  logic       rx_overflow;
 
   sync_fifo #(
       .WIDTH(8),
@@ -114,9 +136,11 @@ module tt_um_drewbabel_uart (
       .rd_en  (rx_pop),
       .wr_data(uart_rx_data),
       .rd_data(rx_fifo_dout),
-      .full   (rx_full_unused),
+      .full   (rx_full),
       .empty  (rx_empty)
   );
+
+  assign rx_overflow = uart_rx_valid & rx_full;
 
   localparam int CsrAddrW = 3;
   localparam int CsrDataW = 8;
@@ -137,9 +161,9 @@ module tt_um_drewbabel_uart (
   ) u_csr_adapter (
       .clk       (clk),
       .rst_n     (rst_n),
-      .csr_mode  (csr_mode),
-      .csr_sclk  (csr_sclk),
-      .csr_mosi  (csr_mosi),
+      .csr_mode  (mode_s),
+      .csr_sclk  (push_s),
+      .csr_mosi  (mosi_s),
       .psel      (csr_psel),
       .penable   (csr_penable),
       .pwrite    (csr_pwrite),
@@ -171,7 +195,8 @@ module tt_um_drewbabel_uart (
       .tx_full    (tx_full),
       .tx_empty   (tx_empty),
       .rx_empty   (rx_empty),
-      .rx_error   (uart_rx_error)
+      .rx_error   (uart_rx_error),
+      .rx_overflow(rx_overflow)
   );
 
   assign uo_out     = csr_read_valid ? csr_rdata_out : rx_fifo_dout;
@@ -186,6 +211,6 @@ module tt_um_drewbabel_uart (
   assign uio_oe     = 8'b0111_1000;  // 1 = output: pins 3,4,5,6
 
   logic _unused;
-  assign _unused = &{ena, uio_in[6:3], rx_full_unused, 1'b0};
+  assign _unused = &{ena, uio_in[6:3], 1'b0};
 
 endmodule

@@ -14,12 +14,13 @@ module tick_gen #(
 
   assign limit = (divisor == '0) ? $bits(limit)'(DIVISOR - 1) : divisor - 1'b1;
 
+  // >= so a divisor shrink cannot strand cnt
   always_ff @(posedge clk) begin
     if (!rst_n) cnt <= '0;
     else if (clr) cnt <= '0;
-    else cnt <= (cnt == limit) ? '0 : cnt + 1'b1;
+    else cnt <= (cnt >= limit) ? '0 : cnt + 1'b1;
   end
 
-  assign tick = (cnt == limit);
+  assign tick = (cnt >= limit);
 
 endmodule

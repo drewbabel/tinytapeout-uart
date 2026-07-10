@@ -33,6 +33,10 @@ module uart_tx #(
   logic tx_par;
   logic par_bit;
 
+  // Config latched per frame
+  logic par_en_q;
+  logic [BaudW-1:0] baud_q;
+
   parity #(
       .DATA_BITS(DATA_BITS)
   ) u_par (
@@ -48,7 +52,7 @@ module uart_tx #(
       .clk    (clk),
       .rst_n  (rst_n),
       .clr    (tick_clr),
-      .divisor(baud_div),
+      .divisor(baud_q),
       .tick   (tick)
   );
 
@@ -59,11 +63,15 @@ module uart_tx #(
       data_cnt <= '0;
       data <= '0;
       tx_par <= 1'b0;
+      par_en_q <= 1'b0;
+      baud_q <= '0;
     end else begin
       state <= next_state;
       if (tx_valid && tx_ready) begin
-        data   <= tx_data;
-        tx_par <= par_bit;
+        data     <= tx_data;
+        tx_par   <= par_bit;
+        par_en_q <= parity_en;
+        baud_q   <= baud_div;
       end
 
       case (state)
@@ -113,7 +121,7 @@ module uart_tx #(
       DATA: begin
         if (data_cnt == $bits(data_cnt)'(DATA_BITS - 1)) begin
           if (tick) begin
-            if (parity_en) next_state = PARITY;
+            if (par_en_q) next_state = PARITY;
             else next_state = STOP;
           end
         end

@@ -5,6 +5,7 @@ module csr_pin_adapter #(
     input logic clk,
     input logic rst_n,
 
+    // 2FF-synced by the parent
     input logic csr_mode,
     input logic csr_sclk,
     input logic csr_mosi,
@@ -24,20 +25,12 @@ module csr_pin_adapter #(
   // Frame = { rw, addr[2:0], data[7:0] }, 12 bits, MSB first
   localparam int FrameBits = 1 + ADDR_W + DATA_W;
 
-  logic [2:0] sync_q;
-  synchronizer #(
-      .WIDTH(3)
-  ) u_sync (
-      .clk  (clk),
-      .rst_n(rst_n),
-      .d    ({csr_mode, csr_sclk, csr_mosi}),
-      .q    (sync_q)
-  );
-
   logic mode_sync;
   logic sclk_sync;
   logic mosi_sync;
-  assign {mode_sync, sclk_sync, mosi_sync} = sync_q;
+  assign mode_sync = csr_mode;
+  assign sclk_sync = csr_sclk;
+  assign mosi_sync = csr_mosi;
 
   logic sclk_sync_d;
   logic sclk_rise;
@@ -105,11 +98,13 @@ module csr_pin_adapter #(
       rdata_out  <= '0;
       read_valid <= 1'b0;
     end else begin
-      state      <= next_state;
-      read_valid <= 1'b0;
+      state <= next_state;
+      // Hold rdata until csr_mode drops or the next frame starts
       if (state == ACCESS && pready && !frame_rw) begin
         rdata_out  <= prdata;
         read_valid <= 1'b1;
+      end else if (sclk_rise && bit_cnt == '0) begin
+        read_valid <= 1'b0;
       end
     end
   end
