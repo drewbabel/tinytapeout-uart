@@ -1,22 +1,27 @@
 module uart_tx #(
     parameter int CLK_FREQ_HZ = 100_000_000,
     parameter int BAUD_RATE   = 115_200,
-    parameter int DATA_BITS   = 8
+    parameter int DATA_BITS   = 8,
+    parameter int BaudW       = 16
 ) (
     input logic clk,
     input logic rst_n,
     input logic [DATA_BITS-1:0] tx_data,
     input logic tx_valid,
+    input logic parity_en,
+    input logic parity_odd,
+    input logic [BaudW-1:0] baud_div,
     output logic tx_ready,
     output logic tx_serial
 );
 
   localparam int ClksPerBit = (CLK_FREQ_HZ + BAUD_RATE / 2) / BAUD_RATE;
 
-  typedef enum logic [1:0] {
+  typedef enum logic [2:0] {
     IDLE,
     START,
     DATA,
+    PARITY,
     STOP
   } state_t;
 
@@ -25,14 +30,26 @@ module uart_tx #(
   logic tick_clr;
   logic [DATA_BITS-1:0] data;
   logic [$clog2(DATA_BITS):0] data_cnt;
+  logic tx_par;
+  logic par_bit;
+
+  parity #(
+      .DATA_BITS(DATA_BITS)
+  ) u_par (
+      .data(tx_data),
+      .odd (parity_odd),
+      .p   (par_bit)
+  );
 
   tick_gen #(
-      .DIVISOR(ClksPerBit)
+      .DIVISOR(ClksPerBit),
+      .Width  (BaudW)
   ) oversample_tick (
-      .clk  (clk),
-      .rst_n(rst_n),
-      .clr  (tick_clr),
-      .tick (tick)
+      .clk    (clk),
+      .rst_n  (rst_n),
+      .clr    (tick_clr),
+      .divisor(baud_div),
+      .tick   (tick)
   );
 
   always_ff @(posedge clk) begin
@@ -41,9 +58,13 @@ module uart_tx #(
       tx_serial <= 1'b1;
       data_cnt <= '0;
       data <= '0;
+      tx_par <= 1'b0;
     end else begin
       state <= next_state;
-      if (tx_valid && tx_ready) data <= tx_data;
+      if (tx_valid && tx_ready) begin
+        data   <= tx_data;
+        tx_par <= par_bit;
+      end
 
       case (state)
         START: begin
@@ -57,6 +78,10 @@ module uart_tx #(
             data <= data >> 1;
             data_cnt <= data_cnt + 1'b1;
           end
+        end
+
+        PARITY: begin
+          tx_serial <= tx_par;
         end
 
         STOP: begin
@@ -87,8 +112,15 @@ module uart_tx #(
 
       DATA: begin
         if (data_cnt == $bits(data_cnt)'(DATA_BITS - 1)) begin
-          if (tick) next_state = STOP;
+          if (tick) begin
+            if (parity_en) next_state = PARITY;
+            else next_state = STOP;
+          end
         end
+      end
+
+      PARITY: begin
+        if (tick) next_state = STOP;
       end
 
       STOP: begin

@@ -22,11 +22,14 @@ project:
     - "tick_gen.sv"
     - "synchronizer.sv"
     - "sync_fifo.sv"
+    - "parity.sv"
+    - "apb_csr.sv"
+    - "csr_pin_adapter.sv"
 
 # Pinout - matches src/project.sv
 pinout:
   # Inputs
-  ui[0]: "tx_data[0]"
+  ui[0]: "tx_data[0] / csr_mosi (in)"
   ui[1]: "tx_data[1]"
   ui[2]: "tx_data[2]"
   ui[3]: "tx_data[3]"
@@ -47,13 +50,13 @@ pinout:
 
   # Bidirectional pins
   uio[0]: "rx_serial (in)"
-  uio[1]: "tx_push (in)"
+  uio[1]: "tx_push / csr_sclk (in)"
   uio[2]: "rx_pop (in)"
   uio[3]: "tx_serial (out)"
   uio[4]: "tx_full (out)"
   uio[5]: "rx_empty (out)"
   uio[6]: "rx_error (out)"
-  uio[7]: ""
+  uio[7]: "csr_mode (in)"
 
 # Do not change!
 yaml_version: 6
