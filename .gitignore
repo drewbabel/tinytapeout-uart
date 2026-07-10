@@ -18,4 +18,11 @@ test/gate_level_netlist.v
 test/sim_build/
 test/results.xml
 test/*.fst
-/DREW_START_HERE.md
+test/csr/sim_build/
+test/csr/results.xml
+test/csr/*.fst
+test/csr/__pycache__/
+test/uart/sim_build/
+test/uart/results.xml
+test/uart/*.fst
+test/uart/__pycache__/

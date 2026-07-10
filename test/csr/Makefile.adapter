@@ -1,0 +1,15 @@
+# Integration test for csr_pin_adapter + apb_csr. Run: make -C test/csr -f Makefile.adapter
+SIM ?= icarus
+TOPLEVEL_LANG ?= verilog
+SIM_BUILD = sim_build/adapter
+SRC_DIR = $(PWD)/../../src
+
+VERILOG_SOURCES += $(SRC_DIR)/synchronizer.sv
+VERILOG_SOURCES += $(SRC_DIR)/apb_csr.sv
+VERILOG_SOURCES += $(SRC_DIR)/csr_pin_adapter.sv
+VERILOG_SOURCES += $(PWD)/tb_adapter.sv
+
+TOPLEVEL = tb_adapter
+COCOTB_TEST_MODULES = test_adapter
+
+include $(shell cocotb-config --makefiles)/Makefile.sim
