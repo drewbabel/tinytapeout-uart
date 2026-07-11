@@ -67,10 +67,6 @@ A serial CSR write shifts a 12-bit frame in on `csr_sclk` and `csr_mosi`, and th
 
 ![CSR write waveform](docs/uart_csr_waveform.svg)
 
-The flow hardens the design onto a 1x2 tile, rendered here from the latest build and browsable in the [interactive 3D viewer](https://drewbabel.github.io/tinytapeout-uart/).
-
-![Die render](https://drewbabel.github.io/tinytapeout-uart/gds_render.png)
-
 ## Revisions
 
 The fabricated die carries rev A. Rev B upgrades the receiver to decide each bit by a 2-of-3 majority vote across three oversample points straddling the bit center, verified at RTL with sample-point glitch tests and a measured clock-mismatch envelope. Its extra cells exceed the 1x2 tile's routing margin, so rev B stays off silicon.
@@ -95,3 +91,9 @@ make -C uart                     # parity and runtime baud
 ### Tool versions
 
 Icarus Verilog 13.0, cocotb 2.0.1, and Verilator for lint. The GDS flow runs LibreLane 3.0.3 on the SKY130A PDK.
+
+## The die
+
+The flow hardens the design onto a 1x2 tile, rendered here from the latest build and browsable in the [interactive 3D viewer](https://drewbabel.github.io/tinytapeout-uart/).
+
+![Die render](https://drewbabel.github.io/tinytapeout-uart/gds_render.png)
