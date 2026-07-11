@@ -59,10 +59,6 @@ The gate-level run (`make GATES=yes`) executes the full top-level suite against 
 
 ## Results
 
-The flow hardens the design onto a 1x2 tile, rendered here from the latest build and browsable in the [interactive 3D viewer](https://drewbabel.github.io/tinytapeout-uart/).
-
-![Die render](https://drewbabel.github.io/tinytapeout-uart/gds_render.png)
-
 A byte pushed into the TX FIFO is shifted out on `tx_serial` as an 8N1 frame, recovered by the receiver into the RX FIFO, and read back on `uo_out`.
 
 ![Loopback waveform](docs/uart_waveform.svg)
@@ -70,6 +66,10 @@ A byte pushed into the TX FIFO is shifted out on `tx_serial` as an 8N1 frame, re
 A serial CSR write shifts a 12-bit frame in on `csr_sclk` and `csr_mosi`, and the adapter drives one APB write into the register block.
 
 ![CSR write waveform](docs/uart_csr_waveform.svg)
+
+The flow hardens the design onto a 1x2 tile, rendered here from the latest build and browsable in the [interactive 3D viewer](https://drewbabel.github.io/tinytapeout-uart/).
+
+![Die render](https://drewbabel.github.io/tinytapeout-uart/gds_render.png)
 
 ## Revisions
 
