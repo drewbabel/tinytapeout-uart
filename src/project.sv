@@ -109,7 +109,7 @@ module tt_um_drewbabel_uart (
     uart_tx_valid = (tstate == TSend);
   end
 
-  always @(posedge clk) begin
+  always_ff @(posedge clk) begin
     if (!rst_n) tstate <= TIdle;
     else begin
       case (tstate)
