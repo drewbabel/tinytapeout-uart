@@ -95,10 +95,10 @@ async def drive_frame(dut, byte, good_stop=True):
             if bit(dut.uio_out, RX_ERROR, default=0) == 1:
                 saw_error[0] = True
 
-    await drive_bit(0)                       # START
+    await drive_bit(0)                       # start
     for i in range(8):
         await drive_bit((byte >> i) & 1)     # data
-    await drive_bit(1 if good_stop else 0)   # STOP
+    await drive_bit(1 if good_stop else 0)   # stop
     await drive_bit(1)                       # idle
     return saw_error[0]
 
@@ -127,10 +127,10 @@ async def drive_frame_cpb(dut, byte, cpb, good_stop=True):
             if bit(dut.uio_out, RX_ERROR, default=0) == 1:
                 saw_error[0] = True
 
-    await drive_bit(0)                       # Start bit
+    await drive_bit(0)                       # start
     for i in range(8):
-        await drive_bit((byte >> i) & 1)     # Data bits, LSB first
-    await drive_bit(1 if good_stop else 0)   # Stop bit
+        await drive_bit((byte >> i) & 1)     # data, LSB first
+    await drive_bit(1 if good_stop else 0)   # stop
     dut.uio_in.value = IDLE
     return saw_error[0]
 
