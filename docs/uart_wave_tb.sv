@@ -1,6 +1,5 @@
 // Generates uart_wave.csv for the README loopback waveform (Throwaway)
-//   iverilog -g2012 -s uart_wave_tb -o w.vvp -I src src/project.sv src/uart.sv \
-//     src/uart_tx.sv src/uart_rx.sv src/tick_gen.sv src/synchronizer.sv src/sync_fifo.sv docs/uart_wave_tb.sv
+//   iverilog -g2012 -s uart_wave_tb -o w.vvp src/*.sv docs/uart_wave_tb.sv
 //   vvp w.vvp && python3 docs/uart_waveform.py
 `default_nettype none
 
