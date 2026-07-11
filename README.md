@@ -69,12 +69,12 @@ A serial CSR write shifts a 12-bit frame in on `csr_sclk` and `csr_mosi`, and th
 
 ## Revisions
 
-The fabricated die carries rev A. Rev B adds a 2-of-3 majority vote across three oversample points of each received bit, verified at RTL with sample-point glitch tests and a measured clock-mismatch envelope, and stays off silicon because its extra cells exceed the 1x2 tile's routing margin.
+The fabricated die carries rev A. Rev B upgrades the receiver to decide each bit by a 2-of-3 majority vote across three oversample points straddling the bit center, verified at RTL with sample-point glitch tests and a measured clock-mismatch envelope. Its extra cells exceed the 1x2 tile's routing margin, so rev B stays off silicon.
 
 | Rev | Where | Status |
 |-----|-------|--------|
 | A | [`ttsky26c-silicon`](https://github.com/drewbabel/tinytapeout-uart/releases/tag/ttsky26c-silicon) | Submitted to the ttsky26c shuttle, on silicon |
-| B | [`rev-b`](https://github.com/drewbabel/tinytapeout-uart/releases/tag/rev-b) | Majority-vote receiver, RTL-verified, not fabricated |
+| B | [`majority-vote`](https://github.com/drewbabel/tinytapeout-uart/releases/tag/majority-vote) | RTL-verified, not fabricated |
 
 ## Building and running
 
