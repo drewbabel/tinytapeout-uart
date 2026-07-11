@@ -2,7 +2,7 @@
 
 [![gds](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/gds.yaml/badge.svg)](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/gds.yaml) [![test](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/test.yaml/badge.svg)](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/test.yaml) [![docs](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/docs.yaml/badge.svg)](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/docs.yaml)
 
-A configurable FIFO-buffered UART with an AMBA APB register block, written in SystemVerilog and hardened on SkyWater SKY130 for the Tiny Tapeout ttsky26c shuttle.
+A configurable FIFO-buffered UART with an AMBA APB register block, written in SystemVerilog and hardened on SkyWater SKY130 for the [Tiny Tapeout](https://tinytapeout.com) ttsky26c shuttle.
 
 The transmitter serializes each byte behind start and stop bits, with optional even or odd parity. The receiver oversamples the line at 16x, recovers each byte with mid-bit sampling that resynchronizes on every start edge, and flags framing and parity errors. A `tick_gen` divides the 50 MHz system clock to the baud rate, and a two-flop `synchronizer` guards each asynchronous input against metastability.
 
@@ -29,7 +29,7 @@ Every block is exercised through the tile pins by a self-checking cocotb suite, 
 | `uio[5]` | out | 1 | `rx_empty`, RX FIFO empty |
 | `uio[6]` | out | 1 | `rx_error`, framing or parity error (one-cycle pulse, latched in `STATUS`) |
 
-Each strobe acts once per rising edge regardless of pulse width. Hold `ui_in` stable from the `tx_push` rising edge until a few clocks after release. A popped byte appears on `uo_out` about six clocks after the `rx_pop` rising edge and holds until the next pop.
+Each strobe acts once per rising edge regardless of pulse width. Hold `ui_in` stable from the `tx_push` rising edge until a few clocks after release. A popped byte appears on `uo_out` about six clocks after the `rx_pop` rising edge and holds until the next pop. Hold both strobes low while reset releases. A strobe already high at release counts as one edge.
 
 ## Configuration registers
 
@@ -43,7 +43,7 @@ The register block is an AMBA APB slave reached serially. With `csr_mode` held h
 | 3 | `BAUD_LO` | R/W | baud divisor `[7:0]` |
 | 4 | `BAUD_HI` | R/W | baud divisor `[15:8]` |
 
-The baud divisor is `clock_hz / baud`. At the 50 MHz tile clock, 115200 baud is a divisor of 434, and a divisor of 0 (the reset value) selects the compile-time default of 434. The receiver rounds the divisor to the nearest multiple of 16 for its oversample period, giving an effective bit rate of `clock_hz / (16 * round(divisor / 16))`, so keep the divisor within 4% of a multiple of 16. Each frame latches the parity and baud configuration as it starts, and the sticky `STATUS` bits hold error and overflow events until a `CTRL` write clears them. Reconfigure the divisor while the link is quiet, writing `BAUD_LO` then `BAUD_HI`.
+The baud divisor is `clock_hz / baud`. At the 50 MHz tile clock, 115200 baud is a divisor of 434, and a divisor of 0 (the reset value) selects the compile-time default of 434. The minimum valid divisor is 16, one clock per oversample point. The receiver rounds the divisor to the nearest multiple of 16 for its oversample period, giving an effective bit rate of `clock_hz / (16 * round(divisor / 16))`, so keep the divisor within 4% of a multiple of 16. Each frame latches the parity and baud configuration as it starts, and the sticky `STATUS` bits hold error and overflow events until a `CTRL` write clears them. Reconfigure the divisor while the link is quiet, writing `BAUD_LO` then `BAUD_HI`.
 
 ## Verification
 
@@ -67,6 +67,15 @@ A serial CSR write shifts a 12-bit frame in on `csr_sclk` and `csr_mosi`, and th
 
 ![CSR write waveform](docs/uart_csr_waveform.svg)
 
+## Revisions
+
+The fabricated die carries rev A. Rev B adds a 2-of-3 majority vote across three oversample points of each received bit, verified at RTL with sample-point glitch tests and a measured clock-mismatch envelope, and stays off silicon because its extra cells exceed the 1x2 tile's routing margin.
+
+| Rev | Where | Status |
+|-----|-------|--------|
+| A | [`ttsky26c-silicon`](https://github.com/drewbabel/tinytapeout-uart/releases/tag/ttsky26c-silicon) | Submitted to the ttsky26c shuttle, on silicon |
+| B | [`rev-b`](https://github.com/drewbabel/tinytapeout-uart/releases/tag/rev-b) | Majority-vote receiver, RTL-verified, not fabricated |
+
 ## Building and running
 
 Run from `test/`:
@@ -82,9 +91,3 @@ make -C uart                     # parity and runtime baud
 ### Tool versions
 
 Icarus Verilog 13.0, cocotb 2.0.1, and Verilator for lint. The GDS flow runs LibreLane 3.0.3 on the SKY130A PDK.
-
-## Resources
-
-- [Tiny Tapeout](https://tinytapeout.com)
-- [FAQ](https://tinytapeout.com/faq/)
-- [Submit your design to a shuttle](https://app.tinytapeout.com/)

@@ -1,4 +1,4 @@
-// Generates uart_csr_wave.csv for the README CSR-write waveform. Throwaway.
+// Generates uart_csr_wave.csv for the README CSR-write waveform (Throwaway)
 //   iverilog -g2012 -s uart_csr_wave_tb -o w.vvp ../src/synchronizer.sv ../src/apb_csr.sv ../src/csr_pin_adapter.sv uart_csr_wave_tb.sv && vvp w.vvp
 //   python3 uart_csr_waveform.py
 `timescale 1ns / 1ps

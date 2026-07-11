@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Renders uart_csr_waveform.svg from uart_csr_wave.csv. See uart_csr_wave_tb.sv for regen.
+# Renders uart_csr_waveform.svg from uart_csr_wave.csv (regen: uart_csr_wave_tb.sv)
 import csv
 import matplotlib
 matplotlib.use("Agg")
