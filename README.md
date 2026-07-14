@@ -2,7 +2,7 @@
 
 [![gds](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/gds.yaml/badge.svg)](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/gds.yaml) [![test](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/test.yaml/badge.svg)](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/test.yaml) [![docs](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/docs.yaml/badge.svg)](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/docs.yaml)
 
-A configurable FIFO-buffered UART with an AMBA APB register block, written in SystemVerilog and hardened on SkyWater SKY130 for the [Tiny Tapeout](https://tinytapeout.com) ttsky26c shuttle.
+A configurable FIFO-buffered UART with an AMBA APB register block, written in SystemVerilog and hardened on SkyWater SKY130 for the [Tiny Tapeout](https://tinytapeout.com) TTSKY26c shuttle.
 
 The transmitter serializes each byte behind start and stop bits, with optional even or odd parity. The receiver oversamples the line at 16x, recovers each byte with mid-bit sampling that resynchronizes on every start edge, and flags framing and parity errors. A `tick_gen` divides the 50 MHz system clock to the baud rate, and a two-flop `synchronizer` guards each asynchronous input against metastability.
 
@@ -73,7 +73,7 @@ The fabricated die carries rev A. Rev B upgrades the receiver to decide each bit
 
 | Rev | Where | Status |
 |-----|-------|--------|
-| A | [`ttsky26c-silicon`](https://github.com/drewbabel/tinytapeout-uart/releases/tag/ttsky26c-silicon) | Submitted to the ttsky26c shuttle, on silicon |
+| A | [`ttsky26c-silicon`](https://github.com/drewbabel/tinytapeout-uart/releases/tag/ttsky26c-silicon) | Submitted to the TTSKY26c shuttle, on silicon |
 | B | [`majority-vote`](https://github.com/drewbabel/tinytapeout-uart/releases/tag/majority-vote) | RTL-verified, not fabricated |
 
 ## Building and running
