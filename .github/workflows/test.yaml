@@ -45,6 +45,12 @@ jobs:
           make
           ! grep failure results.xml
 
+      - name: Run bring-up harness tests
+        run: |
+          cd test/harness
+          make
+          ! grep failure results.xml
+
       - name: Test Summary
         uses: test-summary/action@v2.4
         with:
