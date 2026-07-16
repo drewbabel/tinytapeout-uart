@@ -1,0 +1,42 @@
+name: sync-rev-b
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  merge:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout rev B
+        uses: actions/checkout@v6
+        with:
+          ref: rx-majority-vote
+          fetch-depth: 0
+
+      - name: Merge main
+        id: merge
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git merge origin/main --no-edit; then
+            git push origin rx-majority-vote
+          else
+            echo "conflict=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open conflict issue
+        if: steps.merge.outputs.conflict == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          open=$(gh issue list --state open --search "rev B merge conflict in:title" --json number --jq length)
+          if [ "$open" = "0" ]; then
+            gh issue create --title "rev B merge conflict with main" \
+              --assignee drewbabel \
+              --body "Automatic merge of main into rx-majority-vote hit a conflict at $GITHUB_SHA. Merge main into rx-majority-vote by hand and push."
+          fi
+          exit 1
