@@ -52,6 +52,7 @@ The baud divisor is `clock_hz / baud`. At the 50 MHz tile clock, 115200 baud is 
 | `test/test.py` | Self-checking cocotb suite through the tile pins, run at RTL and gate level |
 | `test/csr` | APB register block driven directly + serial-frame round trip through the adapter |
 | `test/uart` | Parity and runtime baud through a `uart` core loopback |
+| `test/harness` | The bring-up harness stage ladder, run at RTL and gate level |
 
 The top-level suite covers randomized loopback, a data-value sweep, framing and parity errors, a 4% baud mismatch in both directions, start-glitch rejection, back-to-back frames, and every CSR register through the serial frame interface. Strobe handling is checked with held pins, the `ui_in` hold contract, pops on an empty FIFO, and pops during CSR mode. FIFO behavior is checked with `tx_full` backpressure, an overflow followed by an in-order drain of the retained bytes, and a mid-frame reset. The suite also covers mid-frame baud writes, the minimum divisor, sticky error set and clear, unmapped addresses, and the CSR mode-exit strobe race.
 
@@ -91,6 +92,23 @@ make -C uart                     # parity and runtime baud
 ### Tool versions
 
 Icarus Verilog 13.0, cocotb 2.0.1, and Verilator for lint. The GDS flow runs LibreLane 3.0.3 on the SKY130A PDK.
+
+## Bring-up harness
+
+`demo/harness.py` walks the fabricated tile from first contact to a live serial link, one PASS or FAIL line per stage. The `alive` stage proves CSR scratch writes read back over the pin-serial interface, `loopback` echoes bytes through both FIFOs in all three parity modes, `baud` reprograms the runtime divisor, and `link_rx` plus `link_tx` exchange bytes with the host in each direction over a USB-serial adapter.
+
+The harness runs on the host machine and drives two USB devices, both auto-detected. The Tiny Tapeout demo board's RP2040 selects the project, generates the clock, and works the parallel pins over its MicroPython REPL. An FT232 adapter carries the serial link, `TXD` to `uio[0]` and `RXD` to `uio[3]`, at 3.3 V.
+
+```
+pip install pyserial
+python3 demo/harness.py                # full ladder
+python3 demo/harness.py --ft232 none   # no adapter, link stages skipped
+python3 demo/harness.py --terminal     # end in a live echo terminal
+```
+
+The default plan clocks the tile at 12.5 MHz and snaps the divisor to a multiple of 16, a line rate the FT232 matches within 0.02 percent. In the echo terminal every typed character crosses the chip twice, into the RX FIFO, popped and re-pushed by the RP2040, then back out the TX path.
+
+The stage ladder is verified before silicon. `test/harness` runs the exact `run_stages` code against the RTL and the hardened netlist, with the two USB devices replaced by pin-level stand-ins. `basys3/` carries a zero-logic pin wrapper and constraints that put the tile on a Basys 3 for a dry run of the physical serial leg, using the onboard USB-UART at 230400 baud or the FT232 on PMOD JA.
 
 ## The die
 

@@ -27,3 +27,8 @@ test/uart/sim_build/
 test/uart/results.xml
 test/uart/*.fst
 test/uart/__pycache__/
+test/harness/sim_build/
+test/harness/results.xml
+test/harness/__pycache__/
+basys3/build/
+demo/__pycache__/
