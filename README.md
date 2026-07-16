@@ -95,9 +95,7 @@ Icarus Verilog 13.0, cocotb 2.0.1, and Verilator for lint. The GDS flow runs Lib
 
 ## Bring-up harness
 
-`demo/harness.py` walks the fabricated tile from first contact to a live serial link, one PASS or FAIL line per stage. The `alive` stage proves CSR scratch writes read back over the pin-serial interface, `loopback` echoes bytes through both FIFOs in all three parity modes, `baud` reprograms the runtime divisor, and `link_rx` plus `link_tx` exchange bytes with the host in each direction over a USB-serial adapter.
-
-The harness runs on the host machine and drives two USB devices, both auto-detected. The Tiny Tapeout demo board's RP2040 selects the project, generates the clock, and works the parallel pins over its MicroPython REPL. An FT232 adapter carries the serial link, `TXD` to `uio[0]` and `RXD` to `uio[3]`, at 3.3 V.
+`demo/harness.py` walks the fabricated tile from first contact to a live serial link, one PASS or FAIL line per stage. The ladder proves CSR scratch readback, FIFO loopback in all three parity modes, a runtime divisor reprogram, then bytes in each direction over an FT232 adapter wired to `uio[0]` and `uio[3]` at 3.3 V. The Tiny Tapeout demo board's RP2040 supplies the clock, reset, and parallel pins over its MicroPython REPL, both USB ports auto-detect, and `--terminal` ends in a live echo terminal where every typed character crosses the chip twice.
 
 ```
 pip install pyserial
@@ -106,9 +104,7 @@ python3 demo/harness.py --ft232 none   # no adapter, link stages skipped
 python3 demo/harness.py --terminal     # end in a live echo terminal
 ```
 
-The default plan clocks the tile at 12.5 MHz and snaps the divisor to a multiple of 16, a line rate the FT232 matches within 0.02 percent. In the echo terminal every typed character crosses the chip twice, into the RX FIFO, popped and re-pushed by the RP2040, then back out the TX path.
-
-The stage ladder is verified before silicon. `test/harness` runs the exact `run_stages` code against the RTL and the hardened netlist, with the two USB devices replaced by pin-level stand-ins. `basys3/` carries a zero-logic pin wrapper and constraints that put the tile on a Basys 3 for a dry run of the physical serial leg, using the onboard USB-UART at 230400 baud or the FT232 on PMOD JA.
+`test/harness` runs the exact stage code against the RTL and the hardened netlist, with the two USB devices replaced by pin-level stand-ins. `basys3/` carries a zero-logic pin wrapper and constraints for a pre-fab dry run of the serial leg on a Basys 3, onboard USB-UART at 230400 baud or the FT232 on PMOD JA.
 
 ## The die
 
