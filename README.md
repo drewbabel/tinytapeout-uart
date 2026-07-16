@@ -52,6 +52,7 @@ The baud divisor is `clock_hz / baud`. At the 50 MHz tile clock, 115200 baud is 
 | `test/test.py` | Self-checking cocotb suite through the tile pins, run at RTL and gate level |
 | `test/csr` | APB register block driven directly + serial-frame round trip through the adapter |
 | `test/uart` | Parity and runtime baud through a `uart` core loopback |
+| `test/harness` | The bring-up harness stage ladder, run at RTL and gate level |
 
 The top-level suite covers randomized loopback, a data-value sweep, framing and parity errors, a 4% baud mismatch in both directions, start-glitch rejection, back-to-back frames, and every CSR register through the serial frame interface. Strobe handling is checked with held pins, the `ui_in` hold contract, pops on an empty FIFO, and pops during CSR mode. FIFO behavior is checked with `tx_full` backpressure, an overflow followed by an in-order drain of the retained bytes, and a mid-frame reset. The suite also covers mid-frame baud writes, the minimum divisor, sticky error set and clear, unmapped addresses, and the CSR mode-exit strobe race.
 
@@ -91,6 +92,19 @@ make -C uart                     # parity and runtime baud
 ### Tool versions
 
 Icarus Verilog 13.0, cocotb 2.0.1, and Verilator for lint. The GDS flow runs LibreLane 3.0.3 on the SKY130A PDK.
+
+## Bring-up harness
+
+`demo/harness.py` walks the fabricated tile from first contact to a live serial link, one PASS or FAIL line per stage. The ladder proves CSR scratch readback, FIFO loopback in all three parity modes, a runtime divisor reprogram, then bytes in each direction over an FT232 adapter wired to `uio[0]` and `uio[3]` at 3.3 V. The Tiny Tapeout demo board's RP2040 supplies the clock, reset, and parallel pins over its MicroPython REPL, both USB ports auto-detect, and `--terminal` ends in a live echo terminal where every typed character crosses the chip twice.
+
+```
+pip install pyserial
+python3 demo/harness.py                # full ladder
+python3 demo/harness.py --ft232 none   # no adapter, link stages skipped
+python3 demo/harness.py --terminal     # end in a live echo terminal
+```
+
+`test/harness` runs the exact stage code against the RTL and the hardened netlist, with the two USB devices replaced by pin-level stand-ins. `basys3/` carries a zero-logic pin wrapper and constraints for a pre-fab dry run of the serial leg on a Basys 3, onboard USB-UART at 230400 baud or the FT232 on PMOD JA.
 
 ## The die
 
