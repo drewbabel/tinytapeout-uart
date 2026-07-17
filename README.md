@@ -1,6 +1,6 @@
 # tinytapeout-uart
 
-[![gds](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/gds.yaml/badge.svg)](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/gds.yaml) [![test](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/test.yaml/badge.svg)](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/test.yaml) [![docs](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/docs.yaml/badge.svg)](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/docs.yaml)
+[![gds](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/gds.yaml/badge.svg)](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/gds.yaml) [![test](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/test.yaml/badge.svg)](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/test.yaml) [![formal](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/formal.yaml/badge.svg)](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/formal.yaml) [![docs](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/docs.yaml/badge.svg)](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/docs.yaml)
 
 A configurable FIFO-buffered UART with an AMBA APB register block, written in SystemVerilog and hardened on SkyWater SKY130 for the [Tiny Tapeout](https://tinytapeout.com) TTSKY26c shuttle.
 
@@ -10,7 +10,7 @@ A 16-deep `sync_fifo` on each path decouples the host interface from the serial 
 
 A `csr_pin_adapter` shifts a 12-bit serial frame in over three pins and drives it as one APB transaction into `apb_csr`, a register file that controls internal loopback, parity, and a runtime baud divisor, and exposes FIFO and error status.
 
-Every block is exercised through the tile pins by a self-checking cocotb suite, and CI runs the same suite against the hardened gate-level netlist.
+Every block is exercised through the tile pins by a self-checking cocotb suite, and CI runs the same suite against the hardened gate-level netlist. The transmitter and receiver also carry unbounded SymbiYosys proofs.
 
 ![Tile block diagram](docs/uart_tile_block.svg)
 
@@ -53,10 +53,13 @@ The baud divisor is `clock_hz / baud`. At the 50 MHz tile clock, 115200 baud is 
 | `test/csr` | APB register block driven directly + serial-frame round trip through the adapter |
 | `test/uart` | Parity and runtime baud through a `uart` core loopback |
 | `test/harness` | The bring-up harness stage ladder, run at RTL and gate level |
+| `formal/` | Unbounded SymbiYosys proofs of `uart_tx` and `uart_rx` |
 
 The top-level suite covers randomized loopback, a data-value sweep, framing and parity errors, a 4% baud mismatch in both directions, start-glitch rejection, back-to-back frames, and every CSR register through the serial frame interface. Strobe handling is checked with held pins, the `ui_in` hold contract, pops on an empty FIFO, and pops during CSR mode. FIFO behavior is checked with `tx_full` backpressure, an overflow followed by an in-order drain of the retained bytes, and a mid-frame reset. The suite also covers mid-frame baud writes, the minimum divisor, sticky error set and clear, unmapped addresses, and the CSR mode-exit strobe race.
 
 The gate-level run (`make GATES=yes`) executes the full top-level suite against the hardened netlist.
+
+The `uart_tx` and `uart_rx` proofs close by k-induction over the tile's runtime-configurable transmitter and receiver, pinning the transmit handshake and idle-line invariants and the one-cycle receive valid and error pulses.
 
 ## Results
 
@@ -70,7 +73,7 @@ A serial CSR write shifts a 12-bit frame in on `csr_sclk` and `csr_mosi`, and th
 
 ## Timing and area
 
-The OpenLane signoff run closes the hardened rev A netlist at the 50 MHz tile clock across every corner. The worst setup slack is 1.47 ns and the worst hold slack is 0.11 ns, both positive, so the design meets timing with margin. The flow fills the 1x2 tile to 86% standard cell utilization with 476 sequential cells.
+The LibreLane signoff run closes the hardened rev A netlist at the 50 MHz tile clock across every corner. The worst setup slack is 1.47 ns and the worst hold slack is 0.11 ns, both positive, so the design meets timing with margin. The flow fills the 1x2 tile to 86% standard cell utilization with 476 sequential cells.
 
 | Metric | Value |
 |--------|-------|
@@ -83,11 +86,11 @@ The OpenLane signoff run closes the hardened rev A netlist at the 50 MHz tile cl
 
 ## Revisions
 
-The fabricated die carries rev A. Rev B upgrades the receiver to decide each bit by a 2-of-3 majority vote across three oversample points straddling the bit center, verified at RTL with sample-point glitch tests and a measured clock-mismatch envelope. Its extra cells exceed the 1x2 tile's routing margin, so rev B stays off silicon.
+The shuttle submission carries rev A. Rev B upgrades the receiver to decide each bit by a 2-of-3 majority vote across three oversample points straddling the bit center, verified at RTL with sample-point glitch tests and a measured clock-mismatch envelope. Its extra cells exceed the 1x2 tile's routing margin, so rev B stays off the shuttle.
 
 | Rev | Where | Status |
 |-----|-------|--------|
-| A | [`ttsky26c-silicon`](https://github.com/drewbabel/tinytapeout-uart/releases/tag/ttsky26c-silicon) | Submitted to the TTSKY26c shuttle, on silicon |
+| A | [`ttsky26c-silicon`](https://github.com/drewbabel/tinytapeout-uart/releases/tag/ttsky26c-silicon) | Submitted to the TTSKY26c shuttle |
 | B | [`majority-vote`](https://github.com/drewbabel/tinytapeout-uart/releases/tag/majority-vote) | RTL-verified, not fabricated |
 
 ## Building and running
@@ -102,13 +105,20 @@ make -C csr -f Makefile.adapter  # CSR serial adapter plus register block
 make -C uart                     # parity and runtime baud
 ```
 
+Run the formal proofs from the repo root:
+
+```
+sby -f formal/uart_tx.sby        # transmitter proofs
+sby -f formal/uart_rx.sby        # receiver proofs
+```
+
 ### Tool versions
 
-Icarus Verilog 13.0, cocotb 2.0.1, and Verilator for lint. The GDS flow runs LibreLane 3.0.3 on the SKY130A PDK.
+Icarus Verilog 13.0, cocotb 2.0.1, SymbiYosys 0.66 with Z3, and Verilator for lint. The GDS flow runs LibreLane 3.0.3 on the SKY130A PDK.
 
 ## Bring-up harness
 
-`demo/harness.py` walks the fabricated tile from first contact to a live serial link, one PASS or FAIL line per stage. The ladder proves CSR scratch readback, FIFO loopback in all three parity modes, a runtime divisor reprogram, then bytes in each direction over an FT232 adapter wired to `uio[0]` and `uio[3]` at 3.3 V. The Tiny Tapeout demo board's RP2040 supplies the clock, reset, and parallel pins over its MicroPython REPL, both USB ports auto-detect, and `--terminal` ends in a live echo terminal where every typed character crosses the chip twice.
+`demo/harness.py` walks the tile from first contact to a live serial link, one PASS or FAIL line per stage. The ladder proves CSR scratch readback, FIFO loopback in all three parity modes, a runtime divisor reprogram, then bytes in each direction over an FT232 adapter wired to `uio[0]` and `uio[3]` at 3.3 V. The Tiny Tapeout demo board's RP2040 supplies the clock, reset, and parallel pins over its MicroPython REPL, both USB ports auto-detect, and `--terminal` ends in a live echo terminal where every typed character crosses the chip twice.
 
 ```
 pip install pyserial

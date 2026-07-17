@@ -1,0 +1,22 @@
+[tasks]
+prove
+cover
+
+[options]
+prove: mode prove
+cover: mode cover
+cover: depth 20
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal parity.sv
+read -formal tick_gen.sv
+read -formal uart_tx.sv
+prep -top uart_tx
+
+[files]
+src/parity.sv
+src/tick_gen.sv
+src/uart_tx.sv

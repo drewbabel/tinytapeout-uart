@@ -1,0 +1,19 @@
+name: formal
+on: [push, workflow_dispatch]
+jobs:
+  formal:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        mod: [uart_tx, uart_rx]
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+
+      - name: Setup oss-cad-suite
+        uses: YosysHQ/setup-oss-cad-suite@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run proofs
+        run: sby -f formal/${{ matrix.mod }}.sby

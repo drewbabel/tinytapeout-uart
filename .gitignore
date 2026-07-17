@@ -32,3 +32,4 @@ test/harness/results.xml
 test/harness/__pycache__/
 basys3/build/
 demo/__pycache__/
+formal/*/
