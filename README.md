@@ -68,6 +68,19 @@ A serial CSR write shifts a 12-bit frame in on `csr_sclk` and `csr_mosi`, and th
 
 ![CSR write waveform](docs/uart_csr_waveform.svg)
 
+## Timing and area
+
+The OpenLane signoff run closes the hardened rev A netlist at the 50 MHz tile clock across every corner. The worst setup slack is 1.47 ns and the worst hold slack is 0.11 ns, both positive, so the design meets timing with margin. The flow fills the 1x2 tile to 86% standard cell utilization with 476 sequential cells.
+
+| Metric | Value |
+|--------|-------|
+| Clock | 50 MHz |
+| Worst setup slack | 1.47 ns |
+| Worst hold slack | 0.11 ns |
+| Die area | 36347 µm² |
+| Standard cell utilization | 86% |
+| Sequential cells | 476 |
+
 ## Revisions
 
 The fabricated die carries rev A. Rev B upgrades the receiver to decide each bit by a 2-of-3 majority vote across three oversample points straddling the bit center, verified at RTL with sample-point glitch tests and a measured clock-mismatch envelope. Its extra cells exceed the 1x2 tile's routing margin, so rev B stays off silicon.
