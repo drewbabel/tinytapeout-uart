@@ -70,7 +70,7 @@ A serial CSR write shifts a 12-bit frame in on `csr_sclk` and `csr_mosi`, and th
 
 ## Timing and area
 
-The OpenLane signoff run closes the hardened rev A netlist at the 50 MHz tile clock across every corner. The worst setup slack is 1.47 ns and the worst hold slack is 0.11 ns, both positive, so the design meets timing with margin. The flow fills the 1x2 tile to 86% standard cell utilization with 476 sequential cells.
+The LibreLane signoff run closes the hardened rev A netlist at the 50 MHz tile clock across every corner. The worst setup slack is 1.47 ns and the worst hold slack is 0.11 ns, both positive, so the design meets timing with margin. The flow fills the 1x2 tile to 86% standard cell utilization with 476 sequential cells.
 
 | Metric | Value |
 |--------|-------|
@@ -83,11 +83,11 @@ The OpenLane signoff run closes the hardened rev A netlist at the 50 MHz tile cl
 
 ## Revisions
 
-The fabricated die carries rev A. Rev B upgrades the receiver to decide each bit by a 2-of-3 majority vote across three oversample points straddling the bit center, verified at RTL with sample-point glitch tests and a measured clock-mismatch envelope. Its extra cells exceed the 1x2 tile's routing margin, so rev B stays off silicon.
+The shuttle submission carries rev A. Rev B upgrades the receiver to decide each bit by a 2-of-3 majority vote across three oversample points straddling the bit center, verified at RTL with sample-point glitch tests and a measured clock-mismatch envelope. Its extra cells exceed the 1x2 tile's routing margin, so rev B stays off the shuttle.
 
 | Rev | Where | Status |
 |-----|-------|--------|
-| A | [`ttsky26c-silicon`](https://github.com/drewbabel/tinytapeout-uart/releases/tag/ttsky26c-silicon) | Submitted to the TTSKY26c shuttle, on silicon |
+| A | [`ttsky26c-silicon`](https://github.com/drewbabel/tinytapeout-uart/releases/tag/ttsky26c-silicon) | Submitted to the TTSKY26c shuttle |
 | B | [`majority-vote`](https://github.com/drewbabel/tinytapeout-uart/releases/tag/majority-vote) | RTL-verified, not fabricated |
 
 ## Building and running
@@ -108,7 +108,7 @@ Icarus Verilog 13.0, cocotb 2.0.1, and Verilator for lint. The GDS flow runs Lib
 
 ## Bring-up harness
 
-`demo/harness.py` walks the fabricated tile from first contact to a live serial link, one PASS or FAIL line per stage. The ladder proves CSR scratch readback, FIFO loopback in all three parity modes, a runtime divisor reprogram, then bytes in each direction over an FT232 adapter wired to `uio[0]` and `uio[3]` at 3.3 V. The Tiny Tapeout demo board's RP2040 supplies the clock, reset, and parallel pins over its MicroPython REPL, both USB ports auto-detect, and `--terminal` ends in a live echo terminal where every typed character crosses the chip twice.
+`demo/harness.py` walks the tile from first contact to a live serial link, one PASS or FAIL line per stage. The ladder proves CSR scratch readback, FIFO loopback in all three parity modes, a runtime divisor reprogram, then bytes in each direction over an FT232 adapter wired to `uio[0]` and `uio[3]` at 3.3 V. The Tiny Tapeout demo board's RP2040 supplies the clock, reset, and parallel pins over its MicroPython REPL, both USB ports auto-detect, and `--terminal` ends in a live echo terminal where every typed character crosses the chip twice.
 
 ```
 pip install pyserial
