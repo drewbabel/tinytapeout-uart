@@ -1,6 +1,6 @@
 # tinytapeout-uart
 
-[![gds](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/gds.yaml/badge.svg)](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/gds.yaml) [![test](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/test.yaml/badge.svg)](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/test.yaml) [![docs](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/docs.yaml/badge.svg)](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/docs.yaml)
+[![gds](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/gds.yaml/badge.svg)](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/gds.yaml) [![test](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/test.yaml/badge.svg)](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/test.yaml) [![formal](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/formal.yaml/badge.svg)](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/formal.yaml) [![docs](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/docs.yaml/badge.svg)](https://github.com/drewbabel/tinytapeout-uart/actions/workflows/docs.yaml)
 
 A configurable FIFO-buffered UART with an AMBA APB register block, written in SystemVerilog and hardened on SkyWater SKY130 for the [Tiny Tapeout](https://tinytapeout.com) TTSKY26c shuttle.
 
@@ -10,7 +10,7 @@ A 16-deep `sync_fifo` on each path decouples the host interface from the serial 
 
 A `csr_pin_adapter` shifts a 12-bit serial frame in over three pins and drives it as one APB transaction into `apb_csr`, a register file that controls internal loopback, parity, and a runtime baud divisor, and exposes FIFO and error status.
 
-Every block is exercised through the tile pins by a self-checking cocotb suite, and CI runs the same suite against the hardened gate-level netlist.
+Every block is exercised through the tile pins by a self-checking cocotb suite, and CI runs the same suite against the hardened gate-level netlist. The transmitter and receiver also carry unbounded SymbiYosys proofs.
 
 ![Tile block diagram](docs/uart_tile_block.svg)
 
@@ -53,10 +53,13 @@ The baud divisor is `clock_hz / baud`. At the 50 MHz tile clock, 115200 baud is 
 | `test/csr` | APB register block driven directly + serial-frame round trip through the adapter |
 | `test/uart` | Parity and runtime baud through a `uart` core loopback |
 | `test/harness` | The bring-up harness stage ladder, run at RTL and gate level |
+| `formal/` | Unbounded SymbiYosys proofs of `uart_tx` and `uart_rx` |
 
 The top-level suite covers randomized loopback, a data-value sweep, framing and parity errors, a 4% baud mismatch in both directions, start-glitch rejection, back-to-back frames, and every CSR register through the serial frame interface. Strobe handling is checked with held pins, the `ui_in` hold contract, pops on an empty FIFO, and pops during CSR mode. FIFO behavior is checked with `tx_full` backpressure, an overflow followed by an in-order drain of the retained bytes, and a mid-frame reset. The suite also covers mid-frame baud writes, the minimum divisor, sticky error set and clear, unmapped addresses, and the CSR mode-exit strobe race.
 
 The gate-level run (`make GATES=yes`) executes the full top-level suite against the hardened netlist.
+
+The `uart_tx` and `uart_rx` proofs close by k-induction over the tile's runtime-configurable transmitter and receiver, pinning the transmit handshake and idle-line invariants and the one-cycle receive valid and error pulses.
 
 ## Results
 
@@ -102,9 +105,16 @@ make -C csr -f Makefile.adapter  # CSR serial adapter plus register block
 make -C uart                     # parity and runtime baud
 ```
 
+Run the formal proofs from the repo root:
+
+```
+sby -f formal/uart_tx.sby        # transmitter proofs
+sby -f formal/uart_rx.sby        # receiver proofs
+```
+
 ### Tool versions
 
-Icarus Verilog 13.0, cocotb 2.0.1, and Verilator for lint. The GDS flow runs LibreLane 3.0.3 on the SKY130A PDK.
+Icarus Verilog 13.0, cocotb 2.0.1, SymbiYosys 0.66 with Z3, and Verilator for lint. The GDS flow runs LibreLane 3.0.3 on the SKY130A PDK.
 
 ## Bring-up harness
 
