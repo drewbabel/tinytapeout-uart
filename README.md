@@ -84,15 +84,6 @@ The LibreLane signoff run closes the hardened rev A netlist at the 50 MHz tile c
 | Standard cell utilization | 86% |
 | Sequential cells | 476 |
 
-## Revisions
-
-The shuttle submission carries rev A. Rev B upgrades the receiver to decide each bit by a 2-of-3 majority vote across three oversample points straddling the bit center, verified at RTL with sample-point glitch tests and a measured clock-mismatch envelope. Its extra cells exceed the 1x2 tile's routing margin, so rev B stays off the shuttle.
-
-| Rev | Where | Status |
-|-----|-------|--------|
-| A | [`ttsky26c-silicon`](https://github.com/drewbabel/tinytapeout-uart/releases/tag/ttsky26c-silicon) | Submitted to the TTSKY26c shuttle |
-| B | [`majority-vote`](https://github.com/drewbabel/tinytapeout-uart/releases/tag/majority-vote) | RTL-verified, not fabricated |
-
 ## Building and running
 
 Run from `test/`:
